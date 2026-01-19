@@ -1,6 +1,7 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
+import { Platform } from 'react-native';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY!,
@@ -22,6 +23,7 @@ if (getApps().length === 0) {
   app = getApps()[0];
 }
 
+// Initialize auth - web platform uses browser persistence automatically
 auth = getAuth(app);
 db = getFirestore(app);
 
