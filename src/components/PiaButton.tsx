@@ -7,6 +7,7 @@ interface PiaButtonProps {
   variant?: 'primary' | 'secondary';
   style?: ViewStyle;
   textStyle?: TextStyle;
+  disabled?: boolean;
 }
 
 export const PiaButton: React.FC<PiaButtonProps> = ({ 
@@ -14,20 +15,24 @@ export const PiaButton: React.FC<PiaButtonProps> = ({
   children, 
   variant = 'primary',
   style,
-  textStyle
+  textStyle,
+  disabled = false
 }) => {
   return (
     <TouchableOpacity 
       style={[
         styles.button, 
         variant === 'secondary' && styles.buttonSecondary,
+        disabled && styles.buttonDisabled,
         style
       ]} 
       onPress={onPress}
+      disabled={disabled}
     >
       <Text style={[
         styles.buttonText, 
         variant === 'secondary' && styles.buttonTextSecondary,
+        disabled && styles.buttonTextDisabled,
         textStyle
       ]}>
         {children}
@@ -50,6 +55,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
+  buttonDisabled: {
+    backgroundColor: '#E2E8F0',
+    opacity: 0.6,
+  },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
@@ -57,5 +66,8 @@ const styles = StyleSheet.create({
   },
   buttonTextSecondary: {
     color: '#334155',
+  },
+  buttonTextDisabled: {
+    color: '#94A3B8',
   },
 });

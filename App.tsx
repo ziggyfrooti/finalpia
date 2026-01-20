@@ -16,7 +16,12 @@ import MyDayWelcome from './src/screens/MyDayWelcome';
 import PartsOfMyDay from './src/screens/PartsOfMyDay';
 import MomentCards from './src/screens/MomentCards';
 import CompletionScreen from './src/screens/CompletionScreen';
+import TodaysStory from './src/screens/TodaysStory';
+import YourBalance from './src/screens/YourBalance';
+import YourDay from './src/screens/YourDay';
+import AddChildScreen from './src/screens/AddChildScreen';
 import { loginWithGoogle } from './src/lib/auth';
+import { saveSwipe, getCurrentUser, listKids, createTodayCheckin, type Kid } from './src/lib/db';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -31,6 +36,10 @@ export type RootStackParamList = {
   PartsOfMyDay: undefined;
   MomentCards: { category: string };
   CompletionScreen: undefined;
+  TodaysStory: { dateLabel?: string };
+  YourBalance: undefined;
+  YourDay: undefined;
+  AddChild: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -38,6 +47,37 @@ const Stack = createStackNavigator<RootStackParamList>();
 export default function App() {
   const { user, loading } = useAuth();
   const [loggingIn, setLoggingIn] = useState(false);
+  const [kids, setKids] = useState<Kid[]>([]);
+  const [selectedKid, setSelectedKid] = useState<Kid | null>(null);
+  const [currentCheckinId, setCurrentCheckinId] = useState<string | null>(null);
+  const [kidsLoading, setKidsLoading] = useState(false);
+
+  // Load kids when user logs in
+  React.useEffect(() => {
+    if (!user?.uid) {
+      setKids([]);
+      setSelectedKid(null);
+      setCurrentCheckinId(null);
+      return;
+    }
+
+    async function loadKids() {
+      setKidsLoading(true);
+      try {
+        const kidsList = await listKids(user.uid);
+        setKids(kidsList);
+        if (kidsList.length > 0 && !selectedKid) {
+          setSelectedKid(kidsList[0]);
+        }
+      } catch (error) {
+        console.error('Failed to load kids:', error);
+      } finally {
+        setKidsLoading(false);
+      }
+    }
+
+    loadKids();
+  }, [user?.uid]);
 
   const handleGoogleLogin = async () => {
     setLoggingIn(true);
@@ -110,11 +150,12 @@ export default function App() {
                   <ModeSelector
                     onSelectKidSpace={() => navigation.navigate('MyDayWelcome')}
                     onSelectParentSpace={() => navigation.navigate('ParentSpaceHome')}
-                    selectedChild={null}
-                    childrenList={[]}
+                    selectedChild={selectedKid}
+                    childrenList={kids}
                     onSelectChild={(child) => {
-                      // Handle child selection
+                      setSelectedKid(child);
                     }}
+                    onAddChild={() => navigation.navigate('AddChild')}
                   />
                 )}
               </Stack.Screen>
@@ -123,16 +164,27 @@ export default function App() {
                   <MyDayWelcome
                     onStart={() => navigation.navigate('PartsOfMyDay')}
                     onSkip={() => navigation.navigate('ModeSelector')}
-                    childName="Alex"
+                    childName={selectedKid?.name || 'there'}
                   />
                 )}
               </Stack.Screen>
               <Stack.Screen name="PartsOfMyDay">
                 {({ navigation }) => (
                   <PartsOfMyDay
-                    onContinue={(categories) => {
-                      if (categories.length > 0) {
-                        navigation.navigate('MomentCards', { category: categories[0] });
+                    onContinue={async (categories) => {
+                      if (categories.length > 0 && user?.uid && selectedKid?.id) {
+                        try {
+                          const checkinId = await createTodayCheckin({
+                            uid: user.uid,
+                            kidId: selectedKid.id,
+                            selectedCategories: categories,
+                          });
+                          setCurrentCheckinId(checkinId);
+                          navigation.navigate('MomentCards', { category: categories[0] });
+                        } catch (error) {
+                          console.error('Failed to create checkin:', error);
+                          Alert.alert('Error', 'Could not start check-in. Please try again.');
+                        }
                       }
                     }}
                   />
@@ -145,8 +197,23 @@ export default function App() {
                     onComplete={() => navigation.navigate('CompletionScreen')}
                     onDone={() => navigation.navigate('CompletionScreen')}
                     onSwipe={async (payload) => {
-                      console.log('Swipe:', payload);
-                      // Save to Firestore here in future
+                      const user = getCurrentUser();
+                      if (user && selectedKid?.id && currentCheckinId) {
+                        try {
+                          await saveSwipe({
+                            uid: user.uid,
+                            kidId: selectedKid.id,
+                            checkinId: currentCheckinId,
+                            category: payload.category,
+                            cardIndex: payload.cardIndex,
+                            cardText: payload.cardText,
+                            choice: payload.choice,
+                          });
+                        } catch (error) {
+                          console.error('Failed to save swipe:', error);
+                          throw error;
+                        }
+                      }
                     }}
                   />
                 )}
@@ -162,9 +229,69 @@ export default function App() {
                 {({ navigation }) => (
                   <ParentSpaceHome
                     onNavigate={(screen) => {
-                      Alert.alert('Navigate', `Navigate to: ${screen}`);
+                      switch (screen) {
+                        case 'kid-checkin':
+                          navigation.navigate('MyDayWelcome');
+                          break;
+                        case 'todays-story':
+                          if (selectedKid) {
+                            navigation.navigate('TodaysStory');
+                          } else {
+                            Alert.alert('No Child Selected', 'Please select a child first!');
+                          }
+                          break;
+                        case 'your-day':
+                          navigation.navigate('YourDay');
+                          break;
+                        case 'your-balance':
+                          navigation.navigate('YourBalance');
+                          break;
+                        default:
+                          Alert.alert('Coming Soon', `${screen} feature coming soon!`);
+                      }
                     }}
                     onBack={() => navigation.navigate('ModeSelector')}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="TodaysStory">
+                {({ navigation, route }) => (
+                  <TodaysStory
+                    onBack={() => navigation.goBack()}
+                    kids={kids}
+                    selectedKid={selectedKid}
+                    onSelectKid={(kid) => {
+                      setSelectedKid(kid);
+                    }}
+                    checkinId={currentCheckinId}
+                    dateLabel={route.params?.dateLabel}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="YourBalance">
+                {({ navigation }) => (
+                  <YourBalance onBack={() => navigation.goBack()} />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="YourDay">
+                {({ navigation }) => (
+                  <YourDay onBack={() => navigation.goBack()} />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="AddChild">
+                {({ navigation }) => (
+                  <AddChildScreen
+                    onComplete={async (kidId) => {
+                      // Reload kids list
+                      if (user?.uid) {
+                        const kidsList = await listKids(user.uid);
+                        setKids(kidsList);
+                        const newKid = kidsList.find(k => k.id === kidId);
+                        if (newKid) setSelectedKid(newKid);
+                      }
+                      navigation.goBack();
+                    }}
+                    onCancel={() => navigation.goBack()}
                   />
                 )}
               </Stack.Screen>
