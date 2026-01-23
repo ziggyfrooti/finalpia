@@ -16,6 +16,7 @@ interface ModeSelectorProps {
   selectedChild: Child | null;
   childrenList: Child[];
   onSelectChild: (child: Child) => void;
+  onAddChild?: () => void;
 }
 
 export default function ModeSelector({
@@ -24,6 +25,7 @@ export default function ModeSelector({
   selectedChild,
   childrenList,
   onSelectChild,
+  onAddChild,
 }: ModeSelectorProps) {
   const [showChildSelector, setShowChildSelector] = useState(false);
 
@@ -35,36 +37,62 @@ export default function ModeSelector({
         <Text style={styles.title}>Choose Your Space</Text>
 
         {/* Child Selector */}
-        {childrenList.length > 1 && (
+        {(childrenList.length > 0 || onAddChild) && (
           <View style={styles.childSelectorContainer}>
-            <TouchableOpacity
-              onPress={() => setShowChildSelector(!showChildSelector)}
-              style={styles.childSelectorButton}
-            >
-              <Text style={styles.childAvatar}>{selectedChild?.avatar ?? '🙂'}</Text>
-              <Text style={styles.childName}>{selectedChild?.name ?? 'Choose child'}</Text>
-              <Text style={styles.chevron}>▼</Text>
-            </TouchableOpacity>
+            {childrenList.length > 0 ? (
+              <>
+                <TouchableOpacity
+                  onPress={() => setShowChildSelector(!showChildSelector)}
+                  style={styles.childSelectorButton}
+                >
+                  <Text style={styles.childAvatar}>{selectedChild?.avatar ?? '🙂'}</Text>
+                  <Text style={styles.childName}>{selectedChild?.name ?? 'Choose child'}</Text>
+                  <Text style={styles.chevron}>▼</Text>
+                </TouchableOpacity>
 
-            {showChildSelector && (
-              <View style={styles.dropdown}>
-                {childrenList.map((child) => (
-                  <TouchableOpacity
-                    key={child.id}
-                    onPress={() => {
-                      onSelectChild(child);
-                      setShowChildSelector(false);
-                    }}
-                    style={[
-                      styles.dropdownItem,
-                      selectedChild?.id === child.id && styles.dropdownItemSelected,
-                    ]}
-                  >
-                    <Text style={styles.dropdownAvatar}>{child.avatar ?? '🙂'}</Text>
-                    <Text style={styles.dropdownName}>{child.name ?? 'Child'}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                {showChildSelector && (
+                  <View style={styles.dropdown}>
+                    {childrenList.map((child) => (
+                      <TouchableOpacity
+                        key={child.id}
+                        onPress={() => {
+                          onSelectChild(child);
+                          setShowChildSelector(false);
+                        }}
+                        style={[
+                          styles.dropdownItem,
+                          selectedChild?.id === child.id && styles.dropdownItemSelected,
+                        ]}
+                      >
+                        <Text style={styles.dropdownAvatar}>{child.avatar ?? '🙂'}</Text>
+                        <Text style={styles.dropdownName}>{child.name ?? 'Child'}</Text>
+                      </TouchableOpacity>
+                    ))}
+                    {onAddChild && (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setShowChildSelector(false);
+                          onAddChild();
+                        }}
+                        style={[styles.dropdownItem, styles.addChildItem]}
+                      >
+                        <Text style={styles.dropdownAvatar}>➕</Text>
+                        <Text style={styles.addChildText}>Add Another Child</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              </>
+            ) : (
+              onAddChild && (
+                <TouchableOpacity
+                  onPress={onAddChild}
+                  style={styles.addFirstChildButton}
+                >
+                  <Text style={styles.addFirstChildIcon}>➕</Text>
+                  <Text style={styles.addFirstChildText}>Add Your First Child</Text>
+                </TouchableOpacity>
+              )
             )}
           </View>
         )}
@@ -188,6 +216,36 @@ const styles = StyleSheet.create({
   dropdownName: {
     fontSize: 14,
     color: '#334155',
+  },
+  addChildItem: {
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  addChildText: {
+    fontSize: 14,
+    color: '#7DD3C0',
+    fontWeight: '600',
+  },
+  addFirstChildButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(125, 211, 192, 0.1)',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#7DD3C0',
+    borderStyle: 'dashed',
+  },
+  addFirstChildIcon: {
+    fontSize: 20,
+  },
+  addFirstChildText: {
+    fontSize: 16,
+    color: '#7DD3C0',
+    fontWeight: '600',
   },
   modesContainer: {
     flex: 1,

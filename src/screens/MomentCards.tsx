@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder, Dimensions, Alert } from 'react-native';
 import { FloatingCard } from '../components/FloatingCard';
+import { saveSwipe, getCurrentUser } from '../lib/db';
 
 interface MomentCardsProps {
   category: string;
@@ -91,9 +92,9 @@ export default function MomentCards({ category, onComplete, onDone, onSwipe }: M
     },
   });
 
-  const handleSwipe = (direction: 'yes' | 'no') => {
+  const handleSwipe = async (direction: 'yes' | 'no') => {
     try {
-      onSwipe({
+      await onSwipe({
         category,
         cardIndex: currentIndex,
         cardText: cards[currentIndex]?.text ?? '',
@@ -101,7 +102,7 @@ export default function MomentCards({ category, onComplete, onDone, onSwipe }: M
       });
     } catch (e) {
       console.error('Firestore swipe write failed:', e);
-      alert('Could not save. Firestore blocked the write (see console).');
+      Alert.alert('Error', 'Could not save swipe. Please try again.');
       return;
     }
 
