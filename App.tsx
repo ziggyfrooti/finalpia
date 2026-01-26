@@ -20,8 +20,9 @@ import TodaysStory from './src/screens/TodaysStory';
 import YourBalance from './src/screens/YourBalance';
 import YourDay from './src/screens/YourDay';
 import AddChildScreen from './src/screens/AddChildScreen';
+import ParentSetupScreen from './src/screens/ParentSetupScreen';
 import { loginWithGoogle } from './src/lib/auth';
-import { saveSwipe, getCurrentUser, listKids, createTodayCheckin, type Kid } from './src/lib/db';
+import { saveSwipe, getCurrentUser, listKids, createTodayCheckin, type Kid, getParentProfile } from './src/lib/db';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -40,6 +41,7 @@ export type RootStackParamList = {
   YourBalance: undefined;
   YourDay: undefined;
   AddChild: undefined;
+  ParentSetup: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -51,6 +53,10 @@ export default function App() {
   const [selectedKid, setSelectedKid] = useState<Kid | null>(null);
   const [currentCheckinId, setCurrentCheckinId] = useState<string | null>(null);
   const [kidsLoading, setKidsLoading] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [categoryProgress, setCategoryProgress] = useState<Record<string, number>>({});
+  const [needsParentSetup, setNeedsParentSetup] = useState<boolean>(false);
+  const [isNewUser, setIsNewUser] = useState<boolean>(false);
 
   // Load kids when user logs in
   React.useEffect(() => {
@@ -58,12 +64,24 @@ export default function App() {
       setKids([]);
       setSelectedKid(null);
       setCurrentCheckinId(null);
+      setNeedsParentSetup(false);
       return;
     }
 
     async function loadKids() {
+      if (!user?.uid) return;
+      
       setKidsLoading(true);
       try {
+        // Check if parent profile exists
+        const parentProfile = await getParentProfile(user.uid);
+        if (!parentProfile || !parentProfile.name) {
+          setNeedsParentSetup(true);
+          setKidsLoading(false);
+          return;
+        }
+        
+        setNeedsParentSetup(false);
         const kidsList = await listKids(user.uid);
         setKids(kidsList);
         if (kidsList.length > 0 && !selectedKid) {
@@ -136,6 +154,36 @@ export default function App() {
                 )}
               </Stack.Screen>
             </>
+          ) : needsParentSetup ? (
+            <>
+              <Stack.Screen name="ParentSetup">
+                {({ navigation }) => (
+                  <ParentSetupScreen
+                    onContinue={() => {
+                      setNeedsParentSetup(false);
+                      navigation.replace('AddChild');
+                    }}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="AddChild">
+                {({ navigation }) => (
+                  <AddChildScreen
+                    onComplete={async (kidId) => {
+                      // Reload kids list
+                      if (user?.uid) {
+                        const kidsList = await listKids(user.uid);
+                        setKids(kidsList);
+                        const newKid = kidsList.find(k => k.id === kidId);
+                        if (newKid) setSelectedKid(newKid);
+                      }
+                      navigation.replace('Splash');
+                    }}
+                    hideCancel={true}
+                  />
+                )}
+              </Stack.Screen>
+            </>
           ) : (
             <>
               <Stack.Screen name="Splash">
@@ -180,7 +228,14 @@ export default function App() {
                             selectedCategories: categories,
                           });
                           setCurrentCheckinId(checkinId);
-                          navigation.navigate('MomentCards', { category: categories[0] });
+                          setSelectedCategories(categories);
+                          // Initialize progress for all categories
+                          const initialProgress: Record<string, number> = {};
+                          categories.forEach(cat => {
+                            initialProgress[cat] = 0;
+                          });
+                          setCategoryProgress(initialProgress);
+                          navigation.navigate('CategoryHub');
                         } catch (error) {
                           console.error('Failed to create checkin:', error);
                           Alert.alert('Error', 'Could not start check-in. Please try again.');
@@ -194,8 +249,18 @@ export default function App() {
                 {({ navigation, route }) => (
                   <MomentCards
                     category={route.params?.category || 'lunch'}
-                    onComplete={() => navigation.navigate('CompletionScreen')}
-                    onDone={() => navigation.navigate('CompletionScreen')}
+                    onComplete={() => {
+                      // Mark category as complete
+                      const category = route.params?.category || 'lunch';
+                      setCategoryProgress(prev => ({ ...prev, [category]: 100 }));
+                      // Navigate back to CategoryHub
+                      navigation.navigate('CategoryHub');
+                    }}
+                    onDone={() => {
+                      const category = route.params?.category || 'lunch';
+                      setCategoryProgress(prev => ({ ...prev, [category]: 100 }));
+                      navigation.navigate('CategoryHub');
+                    }}
                     onSwipe={async (payload) => {
                       const user = getCurrentUser();
                       if (user && selectedKid?.id && currentCheckinId) {
@@ -263,7 +328,7 @@ export default function App() {
                     onSelectKid={(kid) => {
                       setSelectedKid(kid);
                     }}
-                    checkinId={currentCheckinId}
+                    checkinId={currentCheckinId ?? undefined}
                     dateLabel={route.params?.dateLabel}
                   />
                 )}
@@ -305,15 +370,13 @@ export default function App() {
               <Stack.Screen name="CategoryHub">
                 {({ navigation }) => (
                   <CategoryHub
-                    categories={['lunch', 'recess', 'classroom', 'specials', 'bus']}
-                    progress={{}}
+                    categories={selectedCategories}
+                    progress={categoryProgress}
                     onSelectCategory={(category) => {
-                      // Navigate to category detail
-                      Alert.alert('Category Selected', `Selected: ${category}`);
+                      navigation.navigate('MomentCards', { category });
                     }}
                     onComplete={() => {
-                      Alert.alert('Complete', 'Day completed!');
-                      navigation.navigate('ModeSelector');
+                      navigation.navigate('CompletionScreen');
                     }}
                   />
                 )}

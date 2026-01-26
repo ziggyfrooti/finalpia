@@ -6,12 +6,13 @@ import { addKid, getCurrentUser } from '../lib/db';
 
 interface AddChildScreenProps {
   onComplete: (kidId: string) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
+  hideCancel?: boolean;
 }
 
 const avatarOptions = ['😊', '🌟', '🚀', '🦄', '🌈', '⭐', '🎨', '🎮', '📚', '⚽'];
 
-export default function AddChildScreen({ onComplete, onCancel }: AddChildScreenProps) {
+export default function AddChildScreen({ onComplete, onCancel, hideCancel = false }: AddChildScreenProps) {
   const [name, setName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState('😊');
   const [loading, setLoading] = useState(false);
@@ -93,13 +94,15 @@ export default function AddChildScreen({ onComplete, onCancel }: AddChildScreenP
         >
           {loading ? 'Adding...' : 'Add Child'}
         </PiaButton>
-        <PiaButton
-          onPress={onCancel}
-          variant="secondary"
-          disabled={loading}
-        >
-          Cancel
-        </PiaButton>
+        {!hideCancel && onCancel && (
+          <PiaButton
+            onPress={() => onCancel()}
+            variant="secondary"
+            disabled={loading}
+          >
+            Cancel
+          </PiaButton>
+        )}
       </View>
     </ScrollView>
   );

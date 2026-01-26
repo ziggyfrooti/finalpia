@@ -20,19 +20,65 @@ type Swipe = {
   choice: 'yes' | 'no' | 'unsure';
 };
 
-const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
-  lunch: { label: 'Lunch', emoji: '🍽️' },
-  recess: { label: 'Recess', emoji: '⚽' },
-  classroom: { label: 'Classroom', emoji: '📚' },
-  specials: { label: 'Specials', emoji: '🎨' },
-  bus: { label: 'Bus/After-school', emoji: '🚌' },
+const CATEGORY_META: Record<string, { label: string; emoji: string; baseQuestions: string[] }> = {
+  lunch: { 
+    label: 'Lunch', 
+    emoji: '🍽️',
+    baseQuestions: [
+      'Who did you sit near at lunch today?',
+      'What was the best part of lunch?',
+      'Was anything annoying or funny at lunch?',
+    ],
+  },
+  recess: { 
+    label: 'Recess', 
+    emoji: '⚽',
+    baseQuestions: [
+      'Who did you play with today?',
+      'What game did you play?',
+      'Was there anything you wish went differently?',
+    ],
+  },
+  classroom: { 
+    label: 'Classroom', 
+    emoji: '📚',
+    baseQuestions: [
+      'What was the most interesting thing you learned?',
+      'Was anything confusing today?',
+      'Did you get to share an idea in class?',
+    ],
+  },
+  specials: { 
+    label: 'Specials', 
+    emoji: '🎨',
+    baseQuestions: [
+      'What did you do in specials today?',
+      'What was your favorite part?',
+      'Did you make something you\'re proud of?',
+    ],
+  },
+  bus: { 
+    label: 'Bus/After-school', 
+    emoji: '🚌',
+    baseQuestions: [
+      'Who did you talk to after school?',
+      'Was the ride home calm or loud?',
+      'Anything fun happen on the way home?',
+    ],
+  },
 };
 
 // Generate conversation starters based on actual swipe choices
 function generateQuestions(category: string, yes: string[], no: string[], unsure: string[]): string[] {
+  const meta = CATEGORY_META[category];
   const questions: string[] = [];
 
-  // Questions based on YES responses
+  // Start with baseQuestions
+  if (meta?.baseQuestions) {
+    questions.push(...meta.baseQuestions);
+  }
+
+  // Add dynamic questions based on YES responses
   if (yes.length > 0) {
     const yesText = yes[0].toLowerCase();
     if (category === 'lunch') {
@@ -56,7 +102,7 @@ function generateQuestions(category: string, yes: string[], no: string[], unsure
     }
   }
 
-  // Questions based on NO responses
+  // Add questions based on NO responses
   if (no.length > 0) {
     const noText = no[0].toLowerCase();
     if (category === 'lunch') {
@@ -76,17 +122,8 @@ function generateQuestions(category: string, yes: string[], no: string[], unsure
     questions.push('Tell me more about what you\'re feeling about that.');
   }
 
-  // Default fallback questions per category
-  if (questions.length === 0) {
-    if (category === 'lunch') questions.push('Who did you sit near at lunch today?', 'What did you eat?');
-    else if (category === 'recess') questions.push('What did you do at recess?', 'Who did you play with?');
-    else if (category === 'classroom') questions.push('What did you learn today?', 'What was interesting?');
-    else if (category === 'specials') questions.push('What did you do in specials?', 'Did you make something?');
-    else if (category === 'bus') questions.push('How was the ride home?', 'Who did you talk to?');
-    else questions.push('Tell me more about that.');
-  }
-
-  return questions.slice(0, 3);
+  // Return unique questions, limit to 5 max
+  return [...new Set(questions)].slice(0, 5);
 }
 
 function makeNote(yes: string[], no: string[], unsure: string[]) {
