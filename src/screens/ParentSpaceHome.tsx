@@ -1,17 +1,39 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { FloatingCard } from '../components/FloatingCard';
+import { logout } from '../lib/auth';
 
 type ScreenKey = 'kid-checkin' | 'todays-story' | 'your-day' | 'your-balance';
 
 interface ParentSpaceHomeProps {
   onNavigate: (screen: ScreenKey) => void;
   onBack: () => void;
+  userEmail?: string | null;
+  onLogout?: () => void;
 }
 
-export default function ParentSpaceHome({ onNavigate, onBack }: ParentSpaceHomeProps) {
+export default function ParentSpaceHome({ onNavigate, onBack, userEmail, onLogout }: ParentSpaceHomeProps) {
+  const handleLogout = async () => {
+    await logout();
+    if (onLogout) {
+      onLogout();
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {/* Top Bar with User Info and Logout */}
+      {userEmail && (
+        <View style={styles.topBar}>
+          <Text style={styles.userEmail}>
+            Logged in as <Text style={styles.userEmailBold}>{userEmail}</Text>
+          </Text>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Text style={styles.logoutText}>Sign out</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
@@ -95,6 +117,36 @@ const styles = StyleSheet.create({
     backgroundColor: '#FBF9F4',
     paddingHorizontal: 24,
     paddingVertical: 32,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(148, 163, 184, 0.15)',
+  },
+  userEmail: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+  userEmailBold: {
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  logoutButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.2)',
+  },
+  logoutText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0F172A',
   },
   header: {
     marginBottom: 32,

@@ -160,7 +160,7 @@ export default function App() {
                 {({ navigation }) => (
                   <ParentSetupScreen
                     onContinue={() => {
-                      setNeedsParentSetup(false);
+                      // Don't change needsParentSetup here - let AddChild handle it
                       navigation.replace('AddChild');
                     }}
                   />
@@ -170,14 +170,23 @@ export default function App() {
                 {({ navigation }) => (
                   <AddChildScreen
                     onComplete={async (kidId) => {
+                      console.log('AddChild onComplete called with kidId:', kidId);
                       // Reload kids list
                       if (user?.uid) {
                         const kidsList = await listKids(user.uid);
+                        console.log('Kids list reloaded:', kidsList.length);
                         setKids(kidsList);
                         const newKid = kidsList.find(k => k.id === kidId);
                         if (newKid) setSelectedKid(newKid);
                       }
-                      navigation.replace('Splash');
+                      // Exit parent setup mode before navigating
+                      console.log('Setting needsParentSetup to false');
+                      setNeedsParentSetup(false);
+                      // Use setTimeout to ensure state update completes before navigation
+                      setTimeout(() => {
+                        console.log('Navigating to ModeSelector');
+                        navigation.replace('ModeSelector');
+                      }, 300);
                     }}
                     hideCancel={true}
                   />
@@ -204,6 +213,10 @@ export default function App() {
                       setSelectedKid(child);
                     }}
                     onAddChild={() => navigation.navigate('AddChild')}
+                    userEmail={user?.email}
+                    onLogout={() => {
+                      // Auth listener will handle navigation to login screen
+                    }}
                   />
                 )}
               </Stack.Screen>
@@ -316,6 +329,10 @@ export default function App() {
                       }
                     }}
                     onBack={() => navigation.navigate('ModeSelector')}
+                    userEmail={user?.email}
+                    onLogout={() => {
+                      // Auth listener will handle navigation to login screen
+                    }}
                   />
                 )}
               </Stack.Screen>
