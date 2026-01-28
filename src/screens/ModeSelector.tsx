@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { FloatingCard } from '../components/FloatingCard';
 import { Mascot } from '../components/Mascot';
 import { logout } from '../lib/auth';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 type Child = {
   id: string;
@@ -42,7 +43,8 @@ export default function ModeSelector({
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScreenWrapper>
+      <ScrollView contentContainerStyle={styles.container}>
       {/* Top Bar with User Info and Logout */}
       {userEmail && (
         <View style={styles.topBar}>
@@ -153,6 +155,7 @@ export default function ModeSelector({
         </FloatingCard>
       </View>
     </ScrollView>
+    </ScreenWrapper>
   );
 }
 

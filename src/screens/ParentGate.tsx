@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { FloatingCard } from '../components/FloatingCard';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface ParentGateProps {
   onVerified: () => void;

@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert 
 import { FloatingCard } from '../components/FloatingCard';
 import { PiaButton } from '../components/PiaButton';
 import { getCurrentUser } from '../lib/db';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface ParentSetupScreenProps {
   onContinue: () => void;
@@ -10,6 +11,7 @@ interface ParentSetupScreenProps {
 
 export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps) {
   const [name, setName] = useState('');
+  const [location, setLocation] = useState('');
   const [role, setRole] = useState('Parent');
   const [notifications, setNotifications] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -26,6 +28,11 @@ export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps
       return;
     }
 
+    if (!location.trim()) {
+      Alert.alert('Error', 'Please enter your location');
+      return;
+    }
+
     setSaving(true);
     try {
       // Store parent profile in Firestore
@@ -36,6 +43,7 @@ export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps
         doc(db, 'parents', user.uid),
         {
           name: name.trim(),
+          location: location.trim(),
           role,
           notificationsEnabled: notifications,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -70,6 +78,17 @@ export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps
             value={name}
             onChangeText={setName}
             placeholder="Enter your name"
+            placeholderTextColor="#94A3B8"
+          />
+        </FloatingCard>
+
+        <FloatingCard style={styles.card}>
+          <Text style={styles.label}>Your Location</Text>
+          <TextInput
+            style={styles.input}
+            value={location}
+            onChangeText={setLocation}
+            placeholder="City, State or Country"
             placeholderTextColor="#94A3B8"
           />
         </FloatingCard>
@@ -133,7 +152,7 @@ export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps
         <PiaButton
           onPress={handleContinue}
           style={styles.continueButton}
-          disabled={!name.trim() || saving}
+          disabled={!name.trim() || !location.trim() || saving}
         >
           {saving ? 'Saving...' : 'Continue'}
         </PiaButton>

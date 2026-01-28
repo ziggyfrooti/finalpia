@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert,
 import { PiaButton } from '../components/PiaButton';
 import { Mascot } from '../components/Mascot';
 import { addKid, getCurrentUser } from '../lib/db';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface AddChildScreenProps {
   onComplete: (kidId: string) => void;
@@ -12,15 +13,34 @@ interface AddChildScreenProps {
 
 const avatarOptions = ['😊', '🌟', '🚀', '🦄', '🌈', '⭐', '🎨', '🎮', '📚', '⚽'];
 
+const gradeOptions = [
+  'Pre-K',
+  'Kindergarten',
+  '1st Grade',
+  '2nd Grade',
+  '3rd Grade',
+  '4th Grade',
+  '5th Grade',
+  '6th Grade',
+  '7th Grade',
+  '8th Grade',
+  '9th Grade',
+  '10th Grade',
+  '11th Grade',
+  '12th Grade',
+];
+
 type AddedKid = {
   id: string;
   name: string;
   avatar: string;
+  grade?: string;
 };
 
 export default function AddChildScreen({ onComplete, onCancel, hideCancel = false }: AddChildScreenProps) {
   const [name, setName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState('😊');
+  const [selectedGrade, setSelectedGrade] = useState('');
   const [loading, setLoading] = useState(false);
   const [addedKids, setAddedKids] = useState<AddedKid[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -37,6 +57,11 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
       return;
     }
 
+    if (!selectedGrade) {
+      Alert.alert('Grade Required', 'Please select your child\'s grade');
+      return;
+    }
+
     const user = getCurrentUser();
     if (!user) {
       Alert.alert('Error', 'You must be logged in to add a child');
@@ -48,6 +73,7 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
       const kidId = await addKid(user.uid, {
         name: name.trim(),
         avatar: selectedAvatar,
+        grade: selectedGrade,
       });
       
       console.log('Kid added successfully with ID:', kidId);
@@ -57,6 +83,7 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
         id: kidId,
         name: name.trim(),
         avatar: selectedAvatar,
+        grade: selectedGrade,
       };
       
       console.log('Created newKid object:', newKid);
@@ -73,6 +100,7 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
       // Clear form
       setName('');
       setSelectedAvatar('😊');
+      setSelectedGrade('');
     } catch (error) {
       console.error('Failed to add kid:', error);
       Alert.alert('Error', 'Could not add child. Please try again.');
@@ -102,7 +130,8 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScreenWrapper>
+      <ScrollView contentContainerStyle={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Mascot size="md" />
@@ -118,7 +147,10 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
             {addedKids.map((kid) => (
               <View key={kid.id} style={styles.addedKidCard}>
                 <Text style={styles.addedKidAvatar}>{kid.avatar}</Text>
-                <Text style={styles.addedKidName}>{kid.name}</Text>
+                <View style={styles.addedKidInfo}>
+                  <Text style={styles.addedKidName}>{kid.name}</Text>
+                  {kid.grade && <Text style={styles.addedKidGrade}>{kid.grade}</Text>}
+                </View>
                 <Text style={styles.addedKidCheck}>✓</Text>
               </View>
             ))}
@@ -158,11 +190,41 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
         </View>
       </View>
 
+      {/* Grade Selection */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Grade Level</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.gradeScrollContainer}
+        >
+          {gradeOptions.map((grade) => (
+            <TouchableOpacity
+              key={grade}
+              onPress={() => setSelectedGrade(grade)}
+              style={[
+                styles.gradeOption,
+                selectedGrade === grade && styles.gradeOptionSelected,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.gradeText,
+                  selectedGrade === grade && styles.gradeTextSelected,
+                ]}
+              >
+                {grade}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
       {/* Buttons */}
       <View style={styles.buttonsContainer}>
         <PiaButton
           onPress={handleAdd}
-          disabled={loading || !name.trim()}
+          disabled={loading || !name.trim() || !selectedGrade}
           style={styles.addButton}
         >
           {loading ? 'Adding...' : addedKids.length > 0 ? 'Add Another Child' : 'Add Child'}
@@ -203,7 +265,10 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
             {lastAddedKid && (
               <View style={styles.modalKidInfo}>
                 <Text style={styles.modalKidAvatar}>{lastAddedKid.avatar}</Text>
-                <Text style={styles.modalKidName}>{lastAddedKid.name}</Text>
+                <View style={styles.modalKidTextInfo}>
+                  <Text style={styles.modalKidName}>{lastAddedKid.name}</Text>
+                  {lastAddedKid.grade && <Text style={styles.modalKidGrade}>{lastAddedKid.grade}</Text>}
+                </View>
               </View>
             )}
             <Text style={styles.modalSubtitle}>
@@ -221,6 +286,7 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
         </View>
       </Modal>
     </ScrollView>
+    </ScreenWrapper>
   );
 }
 
@@ -274,11 +340,18 @@ const styles = StyleSheet.create({
   addedKidAvatar: {
     fontSize: 28,
   },
-  addedKidName: {
+  addedKidInfo: {
     flex: 1,
+  },
+  addedKidName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1E293B',
+  },
+  addedKidGrade: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
   },
   addedKidCheck: {
     fontSize: 20,
@@ -324,6 +397,32 @@ const styles = StyleSheet.create({
   },
   avatarEmoji: {
     fontSize: 32,
+  },
+  gradeScrollContainer: {
+    paddingVertical: 4,
+    gap: 8,
+  },
+  gradeOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    marginRight: 8,
+  },
+  gradeOptionSelected: {
+    borderColor: '#7DD3C0',
+    backgroundColor: 'rgba(125, 211, 192, 0.1)',
+  },
+  gradeText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#64748B',
+  },
+  gradeTextSelected: {
+    color: '#1E293B',
+    fontWeight: '600',
   },
   buttonsContainer: {
     gap: 12,
@@ -386,10 +485,18 @@ const styles = StyleSheet.create({
   modalKidAvatar: {
     fontSize: 36,
   },
+  modalKidTextInfo: {
+    flex: 1,
+  },
   modalKidName: {
     fontSize: 20,
     fontWeight: '600',
     color: '#1E293B',
+  },
+  modalKidGrade: {
+    fontSize: 14,
+    color: '#64748B',
+    marginTop: 4,
   },
   modalSubtitle: {
     fontSize: 16,

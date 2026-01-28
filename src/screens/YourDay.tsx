@@ -4,6 +4,7 @@ import { FloatingCard } from '../components/FloatingCard';
 import { PiaButton } from '../components/PiaButton';
 import { CategoryTile } from '../components/CategoryTile';
 import { saveParentSwipe, getCurrentUser } from '../lib/db';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface YourDayProps {
   onBack: () => void;

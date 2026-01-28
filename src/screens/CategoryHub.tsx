@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { FloatingCard } from '../components/FloatingCard';
 import { PiaButton } from '../components/PiaButton';
 import { ProgressRing } from '../components/ProgressRing';
+import { ScreenWrapper } from '../components/ScreenWrapper';
+import { getCategoryLabel, getCategoryEmoji } from '../data/categories';
 
 interface CategoryHubProps {
   categories: string[];
@@ -10,22 +12,6 @@ interface CategoryHubProps {
   onSelectCategory: (category: string) => void;
   onComplete: () => void;
 }
-
-const categoryIcons: Record<string, string> = {
-  lunch: '🍽️',
-  recess: '👥',
-  classroom: '📚',
-  specials: '🎨',
-  bus: '🚌',
-};
-
-const categoryLabels: Record<string, string> = {
-  lunch: 'Lunch',
-  recess: 'Recess',
-  classroom: 'Classroom',
-  specials: 'Specials',
-  bus: 'Bus/After-school',
-};
 
 export default function CategoryHub({
   categories,
@@ -38,19 +24,35 @@ export default function CategoryHub({
     if (nextIncomplete) onSelectCategory(nextIncomplete);
   };
 
+  // Check if all categories are complete
+  const allCategoriesComplete = useMemo(() => {
+    return categories.every(c => (progress?.[c] ?? 0) === 100);
+  }, [categories, progress]);
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScreenWrapper>
+      <ScrollView contentContainerStyle={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>My Day Progress</Text>
         <Text style={styles.subtitle}>Tap a category to continue</Text>
       </View>
 
+      {/* Reminder banner when all complete */}
+      {allCategoriesComplete && (
+        <View style={styles.reminderBanner}>
+          <Text style={styles.reminderIcon}>✉️</Text>
+          <Text style={styles.reminderText}>
+            Ready to send to parent! Tap "Done for Today" below to share your reflections.
+          </Text>
+        </View>
+      )}
+
       {/* Categories */}
       <View style={styles.categoriesContainer}>
         {categories.map((categoryId, index) => {
-          const label = categoryLabels[categoryId] ?? categoryId;
-          const icon = categoryIcons[categoryId] ?? '📝';
+          const label = getCategoryLabel(categoryId);
+          const icon = getCategoryEmoji(categoryId);
           const categoryProgress = progress?.[categoryId] ?? 0;
           const isComplete = categoryProgress === 100;
 
@@ -61,7 +63,7 @@ export default function CategoryHub({
               disabled={isComplete}
               activeOpacity={0.7}
             >
-              <FloatingCard style={isComplete && styles.completedCard}>
+              <FloatingCard style={isComplete ? styles.completedCard : undefined}>
                 <View style={styles.categoryCard}>
                   <ProgressRing
                     progress={categoryProgress}
@@ -99,6 +101,7 @@ export default function CategoryHub({
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </ScreenWrapper>
   );
 }
 
@@ -162,5 +165,23 @@ const styles = StyleSheet.create({
   continueButtonText: {
     fontSize: 16,
     color: '#64748B',
+  },
+  reminderBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E0F2FE',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    gap: 12,
+  },
+  reminderIcon: {
+    fontSize: 24,
+  },
+  reminderText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#0C4A6E',
+    lineHeight: 20,
   },
 });

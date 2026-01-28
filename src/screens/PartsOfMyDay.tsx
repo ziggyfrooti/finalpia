@@ -1,44 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { PiaButton } from '../components/PiaButton';
 import { CategoryTile } from '../components/CategoryTile';
+import { ScreenWrapper } from '../components/ScreenWrapper';
+import { getCategories } from '../data/categories';
+import { isWeekend as checkIsWeekend } from '../lib/dateUtils';
 
 interface PartsOfMyDayProps {
   onContinue: (selectedCategories: string[]) => void;
+  timezone?: string;
+  isWeekend?: boolean; // Can be passed from parent or auto-detected
+  initialSelections?: string[]; // Existing selections when resuming
 }
 
 const categoryIcon = (emoji: string) => <Text style={{ fontSize: 20, color: '#7DD3C0' }}>{emoji}</Text>;
 
-const categories = [
-  {
-    id: 'lunch',
-    label: 'Lunch',
-    icon: categoryIcon('🍽️'),
-  },
-  {
-    id: 'recess',
-    label: 'Recess',
-    icon: categoryIcon('👥'),
-  },
-  {
-    id: 'classroom',
-    label: 'Classroom',
-    icon: categoryIcon('📚'),
-  },
-  {
-    id: 'specials',
-    label: 'Specials',
-    icon: categoryIcon('🎨'),
-  },
-  {
-    id: 'transport',
-    label: 'Bus / Carline',
-    icon: categoryIcon('🚌'),
-  },
-];
+export default function PartsOfMyDay({ onContinue, timezone = 'America/New_York', isWeekend, initialSelections }: PartsOfMyDayProps) {
+  // Detect if weekend (use prop if provided, otherwise calculate)
+  const isWeekendDay = useMemo(() => {
+    if (isWeekend !== undefined) return isWeekend;
+    return checkIsWeekend(timezone);
+  }, [isWeekend, timezone]);
 
-export default function PartsOfMyDay({ onContinue }: PartsOfMyDayProps) {
-  const [selected, setSelected] = useState<string[]>(['lunch', 'recess', 'classroom']);
+  // Get appropriate categories for today
+  const categories = useMemo(() => {
+    return getCategories(isWeekendDay);
+  }, [isWeekendDay]);
+
+  // Default selections based on day type
+  const defaultSelections = useMemo(() => {
+    if (isWeekendDay) {
+      // Weekend: pre-select Family Time, Activities, Outdoor
+      return ['family-time', 'activities', 'outdoor'];
+    } else {
+      // Weekday: pre-select Lunch, Recess, Classroom
+      return ['lunch', 'recess', 'classroom'];
+    }
+  }, [isWeekendDay]);
+
+  // Use initialSelections if provided, otherwise use defaults
+  const [selected, setSelected] = useState<string[]>(initialSelections || defaultSelections);
 
   const toggleCategory = (id: string) => {
     setSelected(prev =>
@@ -47,10 +48,13 @@ export default function PartsOfMyDay({ onContinue }: PartsOfMyDayProps) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScreenWrapper>
+      <ScrollView contentContainerStyle={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Parts of My Day</Text>
+        <Text style={styles.title}>
+          {isWeekendDay ? 'My Weekend' : 'Parts of My Day'}
+        </Text>
         <Text style={styles.subtitle}>Choose what you want to talk about</Text>
       </View>
 
@@ -59,7 +63,7 @@ export default function PartsOfMyDay({ onContinue }: PartsOfMyDayProps) {
         {categories.map((category) => (
           <View key={category.id} style={styles.gridItem}>
             <CategoryTile
-              icon={category.icon}
+              icon={categoryIcon(category.emoji)}
               label={category.label}
               selected={selected.includes(category.id)}
               onClick={() => toggleCategory(category.id)}
@@ -87,6 +91,7 @@ export default function PartsOfMyDay({ onContinue }: PartsOfMyDayProps) {
         </PiaButton>
       </View>
     </ScrollView>
+    </ScreenWrapper>
   );
 }
 

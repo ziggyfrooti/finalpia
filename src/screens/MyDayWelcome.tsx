@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { PiaButton } from '../components/PiaButton';
 import { Mascot } from '../components/Mascot';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface MyDayWelcomeProps {
   onStart: () => void;
@@ -17,7 +18,8 @@ export default function MyDayWelcome({ onStart, onSkip, childName }: MyDayWelcom
     : 'Good evening';
 
   return (
-    <View style={styles.container}>
+    <ScreenWrapper>
+      <View style={styles.container}>
       <View style={styles.content}>
         {/* Mascot */}
         <Mascot size="lg" />
@@ -48,6 +50,7 @@ export default function MyDayWelcome({ onStart, onSkip, childName }: MyDayWelcom
         </Text>
       </View>
     </View>
+    </ScreenWrapper>
   );
 }
 

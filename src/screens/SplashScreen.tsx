@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Mascot } from '../components/Mascot';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface SplashScreenProps {
   onContinue: () => void;
@@ -15,15 +16,17 @@ export default function SplashScreen({ onContinue }: SplashScreenProps) {
   }, [onContinue]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Mascot size="lg" />
-        <Text style={styles.title}>PIA</Text>
-        <Text style={styles.subtitle}>
-          Small moments. Big conversations.
-        </Text>
+    <ScreenWrapper>
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Mascot size="lg" />
+          <Text style={styles.title}>PIA</Text>
+          <Text style={styles.subtitle}>
+            Small moments. Big conversations.
+          </Text>
+        </View>
       </View>
-    </View>
+    </ScreenWrapper>
   );
 }
 

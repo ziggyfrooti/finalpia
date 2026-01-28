@@ -3,6 +3,7 @@ import { View, Text, TextInput, StyleSheet, ScrollView, Alert, TouchableOpacity 
 import { FloatingCard } from '../components/FloatingCard';
 import { PiaButton } from '../components/PiaButton';
 import { loginWithEmail, signupWithEmail } from '../lib/auth';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface EmailLoginScreenProps {
   onSuccess: () => void;
@@ -37,7 +38,8 @@ export default function EmailLoginScreen({ onSuccess, onBack }: EmailLoginScreen
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScreenWrapper>
+      <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.content}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <Text style={styles.backButtonText}>← Back</Text>
@@ -88,6 +90,7 @@ export default function EmailLoginScreen({ onSuccess, onBack }: EmailLoginScreen
         </View>
       </View>
     </ScrollView>
+    </ScreenWrapper>
   );
 }
 

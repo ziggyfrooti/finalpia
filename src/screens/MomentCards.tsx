@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder, Dimensions, Alert } from 'react-native';
 import { FloatingCard } from '../components/FloatingCard';
 import { saveSwipe, getCurrentUser } from '../lib/db';
+import { ScreenWrapper } from '../components/ScreenWrapper';
+import { SoundManager } from '../utils/SoundManager';
+import { getRandomCards } from '../data/cardPools';
 
 interface MomentCardsProps {
   category: string;
   onComplete: () => void;
   onDone: () => void;
+  onChangeCategory?: () => void;
+  onProgressUpdate: (progress: number) => void;
   onSwipe: (payload: {
     category: string;
     cardIndex: number;
@@ -15,60 +20,14 @@ interface MomentCardsProps {
   }) => void;
 }
 
-const momentCardData: Record<string, { text: string; emoji: string }[]> = {
-  lunch: [
-    { text: 'I sat with my friends at lunch', emoji: '🍽️' },
-    { text: 'I tried a new food today', emoji: '🥗' },
-    { text: 'Someone shared their snack with me', emoji: '🍪' },
-    { text: 'I helped clean up after eating', emoji: '✨' },
-    { text: 'The cafeteria was really noisy', emoji: '🔊' },
-    { text: 'I had enough time to finish eating', emoji: '⏰' },
-    { text: 'I ate lunch by myself', emoji: '🤔' },
-    { text: 'I laughed during lunch', emoji: '😄' },
-  ],
-  recess: [
-    { text: 'I played a game with friends', emoji: '⚽' },
-    { text: 'Someone asked me to join them', emoji: '👋' },
-    { text: 'I spent time on the swings or slide', emoji: '🎢' },
-    { text: 'I helped someone who needed it', emoji: '🤝' },
-    { text: 'I played by myself and that was okay', emoji: '🌟' },
-    { text: 'Someone was kind to me', emoji: '💚' },
-    { text: 'I made up a new game', emoji: '🎨' },
-    { text: 'I had a disagreement with a friend', emoji: '😔' },
-  ],
-  classroom: [
-    { text: 'I raised my hand in class', emoji: '✋' },
-    { text: 'I helped a classmate', emoji: '🤗' },
-    { text: 'I finished my work on time', emoji: '✅' },
-    { text: 'Something we learned was really cool', emoji: '🌟' },
-    { text: 'I asked a question', emoji: '❓' },
-    { text: 'The classroom was calm and quiet', emoji: '🤫' },
-    { text: 'I worked in a group', emoji: '👥' },
-    { text: 'I felt confused about something', emoji: '🤔' },
-  ],
-  specials: [
-    { text: 'We had music class today', emoji: '🎵' },
-    { text: 'We had art class today', emoji: '🎨' },
-    { text: 'We had PE today', emoji: '🏃' },
-    { text: "I made something I'm proud of", emoji: '⭐' },
-    { text: 'I learned something new', emoji: '💡' },
-    { text: 'I worked with a partner', emoji: '👫' },
-  ],
-  bus: [
-    { text: 'I sat with a friend on the bus', emoji: '🚌' },
-    { text: 'The bus ride was calm', emoji: '😌' },
-    { text: 'I talked with someone new', emoji: '👋' },
-    { text: 'I looked out the window', emoji: '🪟' },
-    { text: 'Someone was nice to me', emoji: '💚' },
-    { text: 'I went home a different way', emoji: '🏠' },
-  ],
-};
-
 const { width } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 100;
 
-export default function MomentCards({ category, onComplete, onDone, onSwipe }: MomentCardsProps) {
-  const cards = momentCardData[category] || [];
+export default function MomentCards({ category, onComplete, onDone, onChangeCategory, onProgressUpdate, onSwipe }: MomentCardsProps) {
+  // Get random 8 cards from the pool for this category
+  // useMemo ensures we get the same cards for this session
+  const cards = useMemo(() => getRandomCards(category, 8), [category]);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showPause, setShowPause] = useState(false);
   const position = new Animated.ValueXY();
@@ -93,6 +52,9 @@ export default function MomentCards({ category, onComplete, onDone, onSwipe }: M
   });
 
   const handleSwipe = async (direction: 'yes' | 'no') => {
+    // Play sound immediately for instant feedback
+    SoundManager.play(direction === 'yes' ? 'swipeYes' : 'swipeNo');
+
     try {
       await onSwipe({
         category,
@@ -115,6 +77,8 @@ export default function MomentCards({ category, onComplete, onDone, onSwipe }: M
         setCurrentIndex(currentIndex + 1);
         position.setValue({ x: 0, y: 0 });
       } else {
+        // Play category complete sound when finishing all cards
+        SoundManager.play('categoryComplete');
         onComplete();
       }
     });
@@ -186,7 +150,14 @@ export default function MomentCards({ category, onComplete, onDone, onSwipe }: M
             <TouchableOpacity
               onPress={() => {
                 setShowPause(false);
-                onComplete();
+                // Save current progress before changing category
+                const currentProgress = ((currentIndex + 1) / cards.length) * 100;
+                onProgressUpdate(currentProgress);
+                if (onChangeCategory) {
+                  onChangeCategory();
+                } else {
+                  onDone();
+                }
               }}
               style={styles.pauseMenuItem}
             >
@@ -196,6 +167,9 @@ export default function MomentCards({ category, onComplete, onDone, onSwipe }: M
             <TouchableOpacity
               onPress={() => {
                 setShowPause(false);
+                // Save current progress before ending
+                const currentProgress = ((currentIndex + 1) / cards.length) * 100;
+                onProgressUpdate(currentProgress);
                 onDone();
               }}
               style={styles.pauseMenuItem}

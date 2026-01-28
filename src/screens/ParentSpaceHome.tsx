@@ -2,8 +2,9 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { FloatingCard } from '../components/FloatingCard';
 import { logout } from '../lib/auth';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
-type ScreenKey = 'kid-checkin' | 'todays-story' | 'your-day' | 'your-balance';
+type ScreenKey = 'todays-story' | 'your-day' | 'your-balance';
 
 interface ParentSpaceHomeProps {
   onNavigate: (screen: ScreenKey) => void;
@@ -45,20 +46,6 @@ export default function ParentSpaceHome({ onNavigate, onBack, userEmail, onLogou
 
       {/* Cards */}
       <View style={styles.cardsContainer}>
-        {/* Kid Check-In */}
-        <FloatingCard>
-          <TouchableOpacity onPress={() => onNavigate('kid-checkin')} style={styles.card}>
-            <View style={[styles.iconContainer, styles.iconDark]}>
-              <Text style={styles.icon}>😊</Text>
-            </View>
-            <View style={styles.cardContent}>
-              <Text style={styles.cardTitle}>Kid Check-In</Text>
-              <Text style={styles.cardSubtitle}>Start today's swipe reflection</Text>
-            </View>
-            <Text style={styles.cardAction}>Start</Text>
-          </TouchableOpacity>
-        </FloatingCard>
-
         {/* Today's Story */}
         <FloatingCard>
           <TouchableOpacity onPress={() => onNavigate('todays-story')} style={styles.card}>

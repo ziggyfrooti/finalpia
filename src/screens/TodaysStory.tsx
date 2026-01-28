@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { FloatingCard } from '../components/FloatingCard';
 import LoadingScreen from '../components/LoadingScreen';
 import { listSwipes, getCurrentUser, Kid, getTodayOrLatestCheckin, Checkin } from '../lib/db';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface TodaysStoryProps {
   onBack: () => void;
@@ -57,13 +58,78 @@ const CATEGORY_META: Record<string, { label: string; emoji: string; baseQuestion
       'Did you make something you\'re proud of?',
     ],
   },
-  bus: { 
-    label: 'Bus/After-school', 
+  bus: {
+    label: 'Bus/After-school',
     emoji: '🚌',
     baseQuestions: [
       'Who did you talk to after school?',
       'Was the ride home calm or loud?',
       'Anything fun happen on the way home?',
+    ],
+  },
+  'going-home': {
+    label: 'Going Home',
+    emoji: '🏠',
+    baseQuestions: [
+      'How did you get home today?',
+      'Who did you talk to on the way home?',
+      'Was the ride or walk home calm or busy?',
+      'What were you thinking about on the way?',
+    ],
+  },
+  // Weekend categories
+  'family-time': {
+    label: 'Family Time',
+    emoji: '👨‍👩‍👧',
+    baseQuestions: [
+      'What did you do with your family today?',
+      'Who did you spend the most time with?',
+      'What was your favorite part?',
+    ],
+  },
+  activities: {
+    label: 'Activities & Hobbies',
+    emoji: '🎮',
+    baseQuestions: [
+      'What activity did you enjoy most?',
+      'Did you learn or discover something new?',
+      'What would you like to do more of?',
+    ],
+  },
+  outdoor: {
+    label: 'Outdoor Time',
+    emoji: '🏃',
+    baseQuestions: [
+      'What did you do outside today?',
+      'Did you notice anything interesting in nature?',
+      'How did being outside make you feel?',
+    ],
+  },
+  friends: {
+    label: 'Friends & Playdates',
+    emoji: '👫',
+    baseQuestions: [
+      'Who did you play with today?',
+      'What games or activities did you do together?',
+      'What made you laugh the most?',
+    ],
+  },
+  'sports-classes': {
+    label: 'Sports & Classes',
+    emoji: '⚽',
+    baseQuestions: [
+      'What class or sport did you go to?',
+      'What did you practice or learn?',
+      'How did you feel about your performance?',
+    ],
+  },
+  'quiet-time': {
+    label: 'Quiet Time',
+    emoji: '🛏️',
+    baseQuestions: [
+      'What did you do during your quiet time?',
+      'Did you feel relaxed or restless?',
+      'What were you thinking about?',
     ],
   },
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { PiaButton } from '../components/PiaButton';
 import { logout } from '../lib/auth';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface ParentHomeScreenProps {
   onLogout: () => void;

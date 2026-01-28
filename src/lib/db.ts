@@ -12,7 +12,9 @@ import {
   orderBy,
   limit,
   Timestamp,
+  updateDoc,
 } from 'firebase/firestore';
+import { getTodayDateString, getDayOfWeek, isWeekend as isWeekendDay } from './dateUtils';
 
 /** ---------- Helpers ---------- */
 
@@ -30,14 +32,21 @@ export type Kid = {
   id: string;
   name?: string;
   avatar?: string;
+  grade?: string;
   createdAt?: Timestamp;
   [key: string]: any;
 };
 
 export type Checkin = {
   id: string;
-  date: string;
+  date: string; // YYYY-MM-DD format
+  dayOfWeek?: string; // "Monday", "Tuesday", etc.
+  isWeekend?: boolean; // true if Saturday/Sunday
   selectedCategories: string[];
+  categoryProgress?: Record<string, number>; // progress percentage for each category
+  isLocked?: boolean; // true after sending to parent
+  sentToParentAt?: Timestamp; // when "Send to Parent" clicked
+  completedAt?: Timestamp; // when check-in finished
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 };
@@ -106,27 +115,56 @@ export async function createTodayCheckin(params: {
   uid: string;
   kidId: string;
   selectedCategories: string[];
+  timezone?: string;
 }): Promise<string> {
-  const { uid, kidId, selectedCategories } = params;
+  const { uid, kidId, selectedCategories, timezone = 'America/New_York' } = params;
   const checkinsRef = collection(db, 'parents', uid, 'kids', kidId, 'checkins');
 
+  const dateString = getTodayDateString(timezone);
+  const dayOfWeek = getDayOfWeek(timezone);
+  const isWeekend = isWeekendDay(timezone);
+
   // Check if today's check-in already exists
-  const qToday = query(checkinsRef, where('date', '==', todayISO()), limit(1));
+  const qToday = query(checkinsRef, where('date', '==', dateString), limit(1));
   const existing = await getDocs(qToday);
 
   if (!existing.empty) {
     const existingId = existing.docs[0].id;
+    const existingData = existing.docs[0].data();
+    // Initialize progress for new categories only
+    const existingProgress = existingData.categoryProgress || {};
+    const newProgress = { ...existingProgress };
+    selectedCategories.forEach(cat => {
+      if (newProgress[cat] === undefined) {
+        newProgress[cat] = 0;
+      }
+    });
+
     await setDoc(
       doc(db, 'parents', uid, 'kids', kidId, 'checkins', existingId),
-      { selectedCategories, updatedAt: serverTimestamp() },
+      {
+        selectedCategories,
+        categoryProgress: newProgress,
+        updatedAt: serverTimestamp()
+      },
       { merge: true }
     );
     return existingId;
   }
 
+  // Initialize categoryProgress for all categories
+  const initialProgress: Record<string, number> = {};
+  selectedCategories.forEach(cat => {
+    initialProgress[cat] = 0;
+  });
+
   const docRef = await addDoc(checkinsRef, {
-    date: todayISO(),
+    date: dateString,
+    dayOfWeek,
+    isWeekend,
     selectedCategories,
+    categoryProgress: initialProgress,
+    isLocked: false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -145,15 +183,17 @@ export async function getCheckin(params: {
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as Checkin) : null;
 }
 
-export async function getTodayOrLatestCheckin(params: { 
-  uid: string; 
-  kidId: string 
+export async function getTodayOrLatestCheckin(params: {
+  uid: string;
+  kidId: string;
+  timezone?: string;
 }): Promise<Checkin | null> {
-  const { uid, kidId } = params;
+  const { uid, kidId, timezone = 'America/New_York' } = params;
   const checkinsRef = collection(db, 'parents', uid, 'kids', kidId, 'checkins');
 
   // Try today's first
-  const qToday = query(checkinsRef, where('date', '==', todayISO()), limit(1));
+  const dateString = getTodayDateString(timezone);
+  const qToday = query(checkinsRef, where('date', '==', dateString), limit(1));
   const todaySnap = await getDocs(qToday);
   if (!todaySnap.empty) {
     const d = todaySnap.docs[0];
@@ -167,6 +207,96 @@ export async function getTodayOrLatestCheckin(params: {
 
   const d = latestSnap.docs[0];
   return { id: d.id, ...d.data() } as Checkin;
+}
+
+/**
+ * Get check-in for a specific date
+ */
+export async function getCheckinByDate(params: {
+  uid: string;
+  kidId: string;
+  date: string; // YYYY-MM-DD
+}): Promise<Checkin | null> {
+  const { uid, kidId, date } = params;
+  const checkinsRef = collection(db, 'parents', uid, 'kids', kidId, 'checkins');
+
+  const q = query(checkinsRef, where('date', '==', date), limit(1));
+  const snap = await getDocs(q);
+
+  if (snap.empty) return null;
+
+  const d = snap.docs[0];
+  return { id: d.id, ...d.data() } as Checkin;
+}
+
+/**
+ * Lock check-in (mark as sent to parent)
+ */
+export async function lockCheckin(params: {
+  uid: string;
+  kidId: string;
+  checkinId: string;
+}): Promise<void> {
+  const { uid, kidId, checkinId } = params;
+  const checkinRef = doc(db, 'parents', uid, 'kids', kidId, 'checkins', checkinId);
+
+  await updateDoc(checkinRef, {
+    isLocked: true,
+    sentToParentAt: serverTimestamp(),
+    completedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Update category progress for a check-in
+ */
+export async function updateCategoryProgress(params: {
+  uid: string;
+  kidId: string;
+  checkinId: string;
+  categoryProgress: Record<string, number>;
+}): Promise<void> {
+  const { uid, kidId, checkinId, categoryProgress } = params;
+  const checkinRef = doc(db, 'parents', uid, 'kids', kidId, 'checkins', checkinId);
+
+  await updateDoc(checkinRef, {
+    categoryProgress,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Check if user can start a new check-in today
+ * Returns null if allowed, or error message if blocked
+ */
+export async function canStartNewCheckin(params: {
+  uid: string;
+  kidId: string;
+  timezone?: string;
+}): Promise<{ allowed: boolean; reason?: string; existingCheckin?: Checkin }> {
+  const { uid, kidId, timezone = 'America/New_York' } = params;
+
+  const dateString = getTodayDateString(timezone);
+  const existingCheckin = await getCheckinByDate({ uid, kidId, date: dateString });
+
+  if (!existingCheckin) {
+    return { allowed: true };
+  }
+
+  if (existingCheckin.isLocked) {
+    return {
+      allowed: false,
+      reason: 'already-completed',
+      existingCheckin,
+    };
+  }
+
+  // Check-in exists but not locked - can resume
+  return {
+    allowed: true,
+    existingCheckin,
+  };
 }
 
 /** ---------- Swipes ---------- */

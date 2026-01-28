@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { FloatingCard } from '../components/FloatingCard';
 import { Mascot } from '../components/Mascot';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface LoginScreenProps {
   onGoogle: () => void;
@@ -10,7 +11,8 @@ interface LoginScreenProps {
 
 export default function LoginScreen({ onGoogle, onEmail }: LoginScreenProps) {
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScreenWrapper>
+      <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
@@ -58,6 +60,7 @@ export default function LoginScreen({ onGoogle, onEmail }: LoginScreenProps) {
         </Text>
       </View>
     </ScrollView>
+    </ScreenWrapper>
   );
 }
 

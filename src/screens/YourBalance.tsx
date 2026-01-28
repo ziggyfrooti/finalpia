@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from
 import { FloatingCard } from '../components/FloatingCard';
 import { PiaButton } from '../components/PiaButton';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface YourBalanceProps {
   onBack: () => void;
