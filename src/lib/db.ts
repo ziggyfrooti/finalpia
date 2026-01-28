@@ -267,6 +267,25 @@ export async function updateCategoryProgress(params: {
 }
 
 /**
+ * Update selected categories for an existing check-in
+ * Used when user changes category selection mid-check-in
+ */
+export async function updateSelectedCategories(params: {
+  uid: string;
+  kidId: string;
+  checkinId: string;
+  selectedCategories: string[];
+}): Promise<void> {
+  const { uid, kidId, checkinId, selectedCategories } = params;
+  const checkinRef = doc(db, 'parents', uid, 'kids', kidId, 'checkins', checkinId);
+
+  await updateDoc(checkinRef, {
+    selectedCategories,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
  * Check if user can start a new check-in today
  * Returns null if allowed, or error message if blocked
  */

@@ -22,9 +22,9 @@ import YourDay from './src/screens/YourDay';
 import AddChildScreen from './src/screens/AddChildScreen';
 import ParentSetupScreen from './src/screens/ParentSetupScreen';
 import { loginWithGoogle } from './src/lib/auth';
-import { saveSwipe, getCurrentUser, listKids, createTodayCheckin, type Kid, getParentProfile, canStartNewCheckin, lockCheckin, updateCategoryProgress, getTodayOrLatestCheckin } from './src/lib/db';
+import { saveSwipe, getCurrentUser, listKids, createTodayCheckin, type Kid, getParentProfile, lockCheckin, updateCategoryProgress, getCheckinByDate, updateSelectedCategories } from './src/lib/db';
 import { SoundManager } from './src/utils/SoundManager';
-import { isWeekend as checkIsWeekend, DEFAULT_TIMEZONE } from './src/lib/dateUtils';
+import { isWeekend as checkIsWeekend, DEFAULT_TIMEZONE, getTodayDateString } from './src/lib/dateUtils';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -122,10 +122,11 @@ export default function App() {
       }
 
       try {
-        const existingCheckin = await getTodayOrLatestCheckin({
+        const todayDate = getTodayDateString(parentTimezone);
+        const existingCheckin = await getCheckinByDate({
           uid: user.uid,
           kidId: selectedKid.id,
-          timezone: parentTimezone,
+          date: todayDate,
         });
 
         if (existingCheckin && !existingCheckin.isLocked) {
@@ -290,6 +291,8 @@ export default function App() {
                     onLogout={() => {
                       // Auth listener will handle navigation to login screen
                     }}
+                    lastActivityDate={undefined}
+                    hasNewUpdates={false}
                   />
                 )}
               </Stack.Screen>
@@ -308,6 +311,13 @@ export default function App() {
                     timezone={parentTimezone}
                     isWeekend={checkIsWeekend(parentTimezone)}
                     initialSelections={selectedCategories.length > 0 ? selectedCategories : undefined}
+                    onBack={() => {
+                      // Clear state and go back
+                      setSelectedCategories([]);
+                      setCategoryProgress({});
+                      setCurrentCheckinId(null);
+                      navigation.navigate('ModeSelector');
+                    }}
                     onContinue={async (categories) => {
                       // Validation
                       if (categories.length === 0) {
@@ -326,44 +336,124 @@ export default function App() {
                       }
 
                       try {
-                        // Check if can start new check-in (validates daily reset and lock status)
-                        const canStart = await canStartNewCheckin({
+                        // Check if today's check-in exists
+                        const todayDate = getTodayDateString(parentTimezone);
+                        console.log('🗓️ Checking for check-in on date:', todayDate);
+                        const existingCheckin = await getCheckinByDate({
                           uid: user.uid,
                           kidId: selectedKid.id,
-                          timezone: parentTimezone,
+                          date: todayDate,
                         });
 
-                        if (!canStart.allowed && canStart.reason === 'already-completed') {
-                          Alert.alert(
-                            'Already Completed! 🎉',
-                            "You already sent today's reflections to your parent. Great job! Come back tomorrow to reflect on your day.",
-                            [{ text: 'OK', onPress: () => navigation.navigate('ModeSelector') }]
-                          );
+                        if (existingCheckin) {
+                          console.log('📋 Found check-in:', {
+                            id: existingCheckin.id,
+                            date: existingCheckin.date,
+                            isLocked: existingCheckin.isLocked,
+                            selectedCategories: existingCheckin.selectedCategories,
+                            categoryProgress: existingCheckin.categoryProgress,
+                          });
+                        } else {
+                          console.log('❌ No check-in found for today');
+                        }
+
+                        // If check-in exists and is locked (already sent to parent)
+                        if (existingCheckin?.isLocked) {
+                          // Set the state with the completed check-in data
+                          setCurrentCheckinId(existingCheckin.id);
+                          setSelectedCategories(existingCheckin.selectedCategories || []);
+                          setCategoryProgress(existingCheckin.categoryProgress || {});
+                          setCheckInSent(true); // Mark as already sent
+                          // Navigate to CompletionScreen showing "already sent" state
+                          navigation.navigate('CompletionScreen');
                           return;
                         }
 
+                        // If check-in exists but NOT locked → check if categories changed
+                        if (existingCheckin) {
+                          // Check if user changed category selection
+                          const existingCats = existingCheckin.selectedCategories || [];
+                          const newCats = categories.sort();
+                          const oldCats = existingCats.sort();
+                          const categoriesChanged = JSON.stringify(newCats) !== JSON.stringify(oldCats);
+
+                          if (categoriesChanged) {
+                            // Update check-in with new categories
+                            await updateSelectedCategories({
+                              uid: user.uid,
+                              kidId: selectedKid.id,
+                              checkinId: existingCheckin.id,
+                              selectedCategories: categories,
+                            });
+
+                            // Reset progress for new categories
+                            const newProgress: Record<string, number> = {};
+                            categories.forEach(cat => {
+                              newProgress[cat] = 0;
+                            });
+                            await updateCategoryProgress({
+                              uid: user.uid,
+                              kidId: selectedKid.id,
+                              checkinId: existingCheckin.id,
+                              categoryProgress: newProgress,
+                            });
+
+                            setCurrentCheckinId(existingCheckin.id);
+                            setSelectedCategories(categories);
+                            setCategoryProgress(newProgress);
+                            navigation.navigate('CategoryHub');
+                            return;
+                          }
+
+                          const allComplete = existingCheckin.selectedCategories?.every(
+                            cat => (existingCheckin.categoryProgress?.[cat] ?? 0) === 100
+                          );
+                          console.log('✅ All categories complete?', allComplete);
+
+                          if (allComplete) {
+                            console.log('🎯 Navigating to CompletionScreen - check-in complete but not sent');
+                            // Check-in complete but not sent yet → go to completion screen
+                            setCurrentCheckinId(existingCheckin.id);
+                            setSelectedCategories(existingCheckin.selectedCategories || []);
+                            setCategoryProgress(existingCheckin.categoryProgress || {});
+                            navigation.navigate('CompletionScreen');
+                            return;
+                          }
+
+                          console.log('⏸️ Navigating to CategoryHub - check-in incomplete, resuming');
+                          // Not all complete → resume existing check-in
+                          setCurrentCheckinId(existingCheckin.id);
+                          setSelectedCategories(existingCheckin.selectedCategories || []);
+                          setCategoryProgress(existingCheckin.categoryProgress || {});
+                          navigation.navigate('CategoryHub');
+                          return;
+                        }
+
+                        console.log('🆕 No check-in found for today, creating new one');
+                        // No existing check-in → create new one
                         const checkinId = await createTodayCheckin({
                           uid: user.uid,
                           kidId: selectedKid.id,
                           selectedCategories: categories,
                           timezone: parentTimezone,
                         });
+                        console.log('✅ Created new check-in:', checkinId);
                         setCurrentCheckinId(checkinId);
                         setSelectedCategories(categories);
-                        // Merge existing progress with new categories
+                        // Initialize progress for all categories
                         setCategoryProgress(prev => {
                           const newProgress: Record<string, number> = { ...prev };
                           categories.forEach(cat => {
-                            // Only initialize if category doesn't exist yet
                             if (newProgress[cat] === undefined) {
                               newProgress[cat] = 0;
                             }
                           });
                           return newProgress;
                         });
+                        console.log('🚀 Navigating to CategoryHub with new check-in');
                         navigation.navigate('CategoryHub');
                       } catch (error) {
-                        console.error('Failed to create checkin:', error);
+                        console.error('Failed to handle check-in:', error);
                         Alert.alert('Error', 'Could not start check-in. Please try again.');
                       }
                     }}
@@ -429,41 +519,78 @@ export default function App() {
                       navigation.navigate('ModeSelector');
                     }}
                     onSendToParent={async () => {
-                      // Lock the check-in (mark as sent to parent)
-                      if (user?.uid && selectedKid?.id && currentCheckinId) {
-                        try {
-                          await lockCheckin({
-                            uid: user.uid,
-                            kidId: selectedKid.id,
-                            checkinId: currentCheckinId,
-                          });
+                      // Define the send function first (used in Alert callback and direct send)
+                      const performSendToParent = async () => {
+                        if (user?.uid && selectedKid?.id && currentCheckinId) {
+                          try {
+                            await lockCheckin({
+                              uid: user.uid,
+                              kidId: selectedKid.id,
+                              checkinId: currentCheckinId,
+                            });
 
-                          // Mark as sent so UI updates
-                          setCheckInSent(true);
+                            // Mark as sent so UI updates
+                            setCheckInSent(true);
 
-                          // Show success message
-                          Alert.alert(
-                            'Sent to Parent! 🎉',
-                            "Great job completing your reflections! Your parent can now see how your day went.",
-                            [
-                              {
-                                text: 'Done',
-                                onPress: () => {
-                                  // Clear current check-in state
-                                  setCheckInSent(false);
-                                  setCurrentCheckinId(null);
-                                  setSelectedCategories([]);
-                                  setCategoryProgress({});
-                                  navigation.navigate('ModeSelector');
+                            // Show success message
+                            Alert.alert(
+                              'Sent to Parent! 🎉',
+                              "Great job! Your parent can now see your reflections from today.",
+                              [
+                                {
+                                  text: 'Done',
+                                  onPress: () => {
+                                    // Clear current check-in state
+                                    setCheckInSent(false);
+                                    setCurrentCheckinId(null);
+                                    setSelectedCategories([]);
+                                    setCategoryProgress({});
+                                    navigation.navigate('ModeSelector');
+                                  },
                                 },
-                              },
-                            ]
-                          );
-                        } catch (error) {
-                          console.error('Failed to lock check-in:', error);
-                          Alert.alert('Error', 'Could not send to parent. Please try again.');
+                              ]
+                            );
+                          } catch (error) {
+                            console.error('Failed to lock check-in:', error);
+                            Alert.alert('Error', 'Could not send to parent. Please try again.');
+                          }
                         }
+                      };
+
+                      // Check if all categories are complete
+                      const allComplete = selectedCategories.every(
+                        cat => (categoryProgress[cat] ?? 0) === 100
+                      );
+
+                      const completedCount = selectedCategories.filter(
+                        cat => (categoryProgress[cat] ?? 0) === 100
+                      ).length;
+
+                      // If not all complete, show confirmation
+                      if (!allComplete) {
+                        Alert.alert(
+                          'Send Incomplete Reflection?',
+                          `You've only completed ${completedCount} out of ${selectedCategories.length} categories. If you send now, you won't be able to add more reflections today.\n\nAre you sure you want to send?`,
+                          [
+                            {
+                              text: 'Cancel',
+                              style: 'cancel',
+                            },
+                            {
+                              text: 'Send Anyway',
+                              style: 'destructive',
+                              onPress: async () => {
+                                // Proceed with sending
+                                await performSendToParent();
+                              },
+                            },
+                          ]
+                        );
+                        return;
                       }
+
+                      // All complete, send directly
+                      await performSendToParent();
                     }}
                   />
                 )}

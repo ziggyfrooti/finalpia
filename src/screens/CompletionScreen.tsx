@@ -42,9 +42,22 @@ export default function CompletionScreen({
         <View style={styles.content}>
           <Text style={styles.emoji}>{emoji}</Text>
           <Text style={styles.title}>{message}</Text>
-          <Text style={styles.subtitle}>
-            Your reflections have been saved
-          </Text>
+
+          {isSent ? (
+            // Already sent - show special message
+            <>
+              <Text style={styles.subtitle}>
+                You already sent today's reflections to your parent!
+              </Text>
+              <Text style={[styles.subtitle, { marginTop: 8 }]}>
+                Come back tomorrow to share more about your day.
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.subtitle}>
+              Your reflections have been saved
+            </Text>
+          )}
 
           {onSendToParent && !isSent ? (
             // Show "Send to Parent" option (only if not already sent)

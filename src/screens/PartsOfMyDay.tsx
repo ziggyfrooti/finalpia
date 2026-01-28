@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { PiaButton } from '../components/PiaButton';
 import { CategoryTile } from '../components/CategoryTile';
 import { ScreenWrapper } from '../components/ScreenWrapper';
@@ -8,6 +8,7 @@ import { isWeekend as checkIsWeekend } from '../lib/dateUtils';
 
 interface PartsOfMyDayProps {
   onContinue: (selectedCategories: string[]) => void;
+  onBack?: () => void; // Optional back button handler
   timezone?: string;
   isWeekend?: boolean; // Can be passed from parent or auto-detected
   initialSelections?: string[]; // Existing selections when resuming
@@ -15,7 +16,7 @@ interface PartsOfMyDayProps {
 
 const categoryIcon = (emoji: string) => <Text style={{ fontSize: 20, color: '#7DD3C0' }}>{emoji}</Text>;
 
-export default function PartsOfMyDay({ onContinue, timezone = 'America/New_York', isWeekend, initialSelections }: PartsOfMyDayProps) {
+export default function PartsOfMyDay({ onContinue, onBack, timezone = 'America/New_York', isWeekend, initialSelections }: PartsOfMyDayProps) {
   // Detect if weekend (use prop if provided, otherwise calculate)
   const isWeekendDay = useMemo(() => {
     if (isWeekend !== undefined) return isWeekend;
@@ -50,6 +51,13 @@ export default function PartsOfMyDay({ onContinue, timezone = 'America/New_York'
   return (
     <ScreenWrapper>
       <ScrollView contentContainerStyle={styles.container}>
+      {/* Back Button */}
+      {onBack && (
+        <TouchableOpacity onPress={onBack} style={styles.backButton}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>
@@ -101,6 +109,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FBF9F4',
     paddingHorizontal: 24,
     paddingVertical: 32,
+  },
+  backButton: {
+    marginBottom: 16,
+    paddingVertical: 8,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#64748B',
+    fontWeight: '500',
   },
   header: {
     marginBottom: 32,

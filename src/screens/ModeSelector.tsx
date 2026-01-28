@@ -21,6 +21,8 @@ interface ModeSelectorProps {
   onAddChild?: () => void;
   userEmail?: string | null;
   onLogout?: () => void;
+  lastActivityDate?: string | null; // "Today", "Yesterday", or null if no activity
+  hasNewUpdates?: boolean; // true if parent has new updates to view
 }
 
 export default function ModeSelector({
@@ -32,6 +34,8 @@ export default function ModeSelector({
   onAddChild,
   userEmail,
   onLogout,
+  lastActivityDate,
+  hasNewUpdates,
 }: ModeSelectorProps) {
   const [showChildSelector, setShowChildSelector] = useState(false);
 
@@ -135,7 +139,9 @@ export default function ModeSelector({
             <View style={styles.modeContent}>
               <Text style={styles.modeTitle}>My Day</Text>
               <Text style={styles.modeSubtitle}>For kids to share moments from school</Text>
-              <Text style={styles.modeActivity}>Last activity: Today</Text>
+              {lastActivityDate && (
+                <Text style={styles.modeActivity}>Last activity: {lastActivityDate}</Text>
+              )}
             </View>
           </TouchableOpacity>
         </FloatingCard>
@@ -149,7 +155,9 @@ export default function ModeSelector({
             <View style={styles.modeContent}>
               <Text style={styles.modeTitle}>Parent Space</Text>
               <Text style={styles.modeSubtitle}>Connect with your child's day</Text>
-              <Text style={styles.modeActivity}>New updates available</Text>
+              {hasNewUpdates && (
+                <Text style={styles.modeActivity}>New updates available</Text>
+              )}
             </View>
           </TouchableOpacity>
         </FloatingCard>
