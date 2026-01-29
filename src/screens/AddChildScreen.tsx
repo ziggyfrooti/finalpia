@@ -168,6 +168,7 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
           onChangeText={setName}
           autoCapitalize="words"
           autoCorrect={false}
+          maxLength={50}
         />
       </View>
 

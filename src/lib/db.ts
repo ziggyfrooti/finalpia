@@ -455,17 +455,19 @@ export async function listParentSwipes(params: {
   const { uid, startDate, endDate } = params;
 
   const swipesRef = collection(db, 'parents', uid, 'parentSwipes');
-  
-  let q = query(swipesRef, orderBy('date', 'desc'));
-  
+
+  // Build query constraints array (fixes query construction bug)
+  const constraints: any[] = [orderBy('date', 'desc')];
+
   if (startDate) {
-    q = query(q, where('date', '>=', startDate));
-  }
-  
-  if (endDate) {
-    q = query(q, where('date', '<=', endDate));
+    constraints.push(where('date', '>=', startDate));
   }
 
+  if (endDate) {
+    constraints.push(where('date', '<=', endDate));
+  }
+
+  const q = query(swipesRef, ...constraints);
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }

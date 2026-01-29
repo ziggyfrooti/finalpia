@@ -1,8 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder, Dimensions, Alert } from 'react-native';
 import { FloatingCard } from '../components/FloatingCard';
-import { saveSwipe, getCurrentUser } from '../lib/db';
-import { ScreenWrapper } from '../components/ScreenWrapper';
 import { SoundManager } from '../utils/SoundManager';
 import { getRandomCards } from '../data/cardPools';
 
@@ -16,17 +14,18 @@ interface MomentCardsProps {
     category: string;
     cardIndex: number;
     cardText: string;
-    choice: 'yes' | 'no';
+    choice: 'yes' | 'no' | 'unsure';
   }) => void;
 }
 
 const { width } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 100;
+const SWIPE_UP_THRESHOLD = 80;
 
 export default function MomentCards({ category, onComplete, onDone, onChangeCategory, onProgressUpdate, onSwipe }: MomentCardsProps) {
   // Get random 8 cards from the pool for this category
-  // useMemo ensures we get the same cards for this session
-  const cards = useMemo(() => getRandomCards(category, 8), [category]);
+  // useState with initializer ensures cards regenerate each time user enters category
+  const [cards] = useState(() => getRandomCards(category, 8));
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showPause, setShowPause] = useState(false);
@@ -35,10 +34,13 @@ export default function MomentCards({ category, onComplete, onDone, onChangeCate
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onPanResponderMove: (_, gesture) => {
-      position.setValue({ x: gesture.dx, y: 0 });
+      position.setValue({ x: gesture.dx, y: gesture.dy });
     },
     onPanResponderRelease: (_, gesture) => {
-      if (gesture.dx > SWIPE_THRESHOLD) {
+      if (gesture.dy < -SWIPE_UP_THRESHOLD && Math.abs(gesture.dx) < SWIPE_THRESHOLD) {
+        // Swipe up for "unsure"
+        handleSwipe('unsure');
+      } else if (gesture.dx > SWIPE_THRESHOLD) {
         handleSwipe('yes');
       } else if (gesture.dx < -SWIPE_THRESHOLD) {
         handleSwipe('no');
@@ -51,9 +53,14 @@ export default function MomentCards({ category, onComplete, onDone, onChangeCate
     },
   });
 
-  const handleSwipe = async (direction: 'yes' | 'no') => {
+  const handleSwipe = async (direction: 'yes' | 'no' | 'unsure') => {
     // Play sound immediately for instant feedback
-    SoundManager.play(direction === 'yes' ? 'swipeYes' : 'swipeNo');
+    if (direction === 'yes') {
+      SoundManager.play('swipeYes');
+    } else if (direction === 'no') {
+      SoundManager.play('swipeNo');
+    }
+    // No sound for 'unsure' - could add a third sound in future
 
     try {
       await onSwipe({
@@ -62,20 +69,42 @@ export default function MomentCards({ category, onComplete, onDone, onChangeCate
         cardText: cards[currentIndex]?.text ?? '',
         choice: direction,
       });
-    } catch (e) {
+    } catch (e: any) {
       console.error('Firestore swipe write failed:', e);
-      Alert.alert('Error', 'Could not save swipe. Please try again.');
+
+      // Provide helpful error messages based on error type
+      let errorMessage = 'Could not save your response. Please try again.';
+
+      if (e?.code === 'permission-denied') {
+        errorMessage = 'Permission denied. Please check your account settings.';
+      } else if (e?.message?.includes('network') || e?.message?.includes('Failed to get document')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (e?.code === 'unavailable') {
+        errorMessage = 'Service temporarily unavailable. Please try again in a moment.';
+      }
+
+      Alert.alert('Error Saving Response', errorMessage);
       return;
     }
 
+    const animationTarget =
+      direction === 'yes' ? { x: width, y: 0 } :
+      direction === 'no' ? { x: -width, y: 0 } :
+      { x: 0, y: -300 }; // Swipe up for unsure
+
     Animated.timing(position, {
-      toValue: { x: direction === 'yes' ? width : -width, y: 0 },
+      toValue: animationTarget,
       duration: 250,
       useNativeDriver: false,
     }).start(() => {
       if (currentIndex < cards.length - 1) {
-        setCurrentIndex(currentIndex + 1);
+        const nextIndex = currentIndex + 1;
+        setCurrentIndex(nextIndex);
         position.setValue({ x: 0, y: 0 });
+
+        // Update progress after each swipe (debounced by App.tsx)
+        const percentComplete = Math.round((nextIndex / cards.length) * 100);
+        onProgressUpdate(percentComplete);
       } else {
         // Play category complete sound when finishing all cards
         SoundManager.play('categoryComplete');
@@ -89,6 +118,26 @@ export default function MomentCards({ category, onComplete, onDone, onChangeCate
     setCurrentIndex((prev) => Math.max(prev - 1, 0));
     position.setValue({ x: 0, y: 0 });
   };
+
+  // Handle empty card pools
+  if (cards.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.categoryTitle}>{category}</Text>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>😕</Text>
+          <Text style={styles.emptyMessage}>
+            No cards available for this category.
+          </Text>
+          <TouchableOpacity onPress={onDone} style={styles.emptyButton}>
+            <Text style={styles.emptyButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   if (currentIndex >= cards.length) return null;
 
@@ -110,6 +159,12 @@ export default function MomentCards({ category, onComplete, onDone, onChangeCate
   const yesOpacity = position.x.interpolate({
     inputRange: [0, 50, 200],
     outputRange: [0, 0.5, 1],
+    extrapolate: 'clamp',
+  });
+
+  const unsureOpacity = position.y.interpolate({
+    inputRange: [-200, -50, 0],
+    outputRange: [1, 0.5, 0],
     extrapolate: 'clamp',
   });
 
@@ -211,6 +266,12 @@ export default function MomentCards({ category, onComplete, onDone, onChangeCate
             <Text style={styles.indicatorIconYes}>✓</Text>
           </View>
         </Animated.View>
+
+        <Animated.View style={[styles.indicator, styles.indicatorTop, { opacity: unsureOpacity }]}>
+          <View style={styles.indicatorCircleUnsure}>
+            <Text style={styles.indicatorIconUnsure}>?</Text>
+          </View>
+        </Animated.View>
       </View>
 
       {/* Swipe Buttons */}
@@ -219,12 +280,16 @@ export default function MomentCards({ category, onComplete, onDone, onChangeCate
           <Text style={styles.buttonNoIcon}>✕</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity onPress={() => handleSwipe('unsure')} style={styles.buttonUnsure}>
+          <Text style={styles.buttonUnsureIcon}>?</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={() => handleSwipe('yes')} style={styles.buttonYes}>
           <Text style={styles.buttonYesIcon}>✓</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.hint}>Swipe right if it happened • Swipe left if it didn't</Text>
+      <Text style={styles.hint}>Swipe right (yes) • Swipe up (unsure) • Swipe left (no)</Text>
     </View>
   );
 }
@@ -336,6 +401,11 @@ const styles = StyleSheet.create({
   indicatorRight: {
     right: 32,
   },
+  indicatorTop: {
+    top: 100,
+    left: '50%',
+    marginLeft: -40,
+  },
   indicatorCircleNo: {
     width: 80,
     height: 80,
@@ -348,6 +418,19 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: 'bold',
     color: '#FF9B8A',
+  },
+  indicatorCircleUnsure: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFF4E0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  indicatorIconUnsure: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    color: '#FDB022',
   },
   indicatorCircleYes: {
     width: 80,
@@ -389,6 +472,26 @@ const styles = StyleSheet.create({
     color: '#FF9B8A',
     fontWeight: 'bold',
   },
+  buttonUnsure: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFF4E0',
+    shadowColor: '#FDB022',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  buttonUnsureIcon: {
+    fontSize: 32,
+    color: '#FDB022',
+    fontWeight: 'bold',
+  },
   buttonYes: {
     width: 80,
     height: 80,
@@ -412,5 +515,32 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     textAlign: 'center',
     marginTop: 24,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  emptyText: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyMessage: {
+    fontSize: 18,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  emptyButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: '#7DD3C0',
+    borderRadius: 20,
+  },
+  emptyButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });

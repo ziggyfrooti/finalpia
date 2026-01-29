@@ -5,7 +5,7 @@ import { Mascot } from '../components/Mascot';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface LoginScreenProps {
-  onGoogle: () => void;
+  onGoogle?: () => void; // Optional - Google auth disabled on mobile
   onEmail: () => void;
 }
 
@@ -25,26 +25,30 @@ export default function LoginScreen({ onGoogle, onEmail }: LoginScreenProps) {
 
         {/* Login Options */}
         <View style={styles.loginOptions}>
-          <FloatingCard>
-            <TouchableOpacity 
-              onPress={onGoogle}
-              style={styles.loginButton}
-            >
-              <View style={styles.googleIconContainer}>
-                <Text style={styles.googleIcon}>G</Text>
+          {onGoogle && (
+            <>
+              <FloatingCard>
+                <TouchableOpacity
+                  onPress={onGoogle}
+                  style={styles.loginButton}
+                >
+                  <View style={styles.googleIconContainer}>
+                    <Text style={styles.googleIcon}>G</Text>
+                  </View>
+                  <Text style={styles.loginButtonText}>Continue with Google</Text>
+                </TouchableOpacity>
+              </FloatingCard>
+
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
               </View>
-              <Text style={styles.loginButtonText}>Continue with Google</Text>
-            </TouchableOpacity>
-          </FloatingCard>
-
-          <View style={styles.dividerContainer}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
-          </View>
+            </>
+          )}
 
           <FloatingCard>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={onEmail}
               style={styles.loginButton}
             >

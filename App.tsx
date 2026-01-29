@@ -21,7 +21,6 @@ import YourBalance from './src/screens/YourBalance';
 import YourDay from './src/screens/YourDay';
 import AddChildScreen from './src/screens/AddChildScreen';
 import ParentSetupScreen from './src/screens/ParentSetupScreen';
-import { loginWithGoogle } from './src/lib/auth';
 import { saveSwipe, getCurrentUser, listKids, createTodayCheckin, type Kid, getParentProfile, lockCheckin, updateCategoryProgress, getCheckinByDate, updateSelectedCategories } from './src/lib/db';
 import { SoundManager } from './src/utils/SoundManager';
 import { isWeekend as checkIsWeekend, DEFAULT_TIMEZONE, getTodayDateString } from './src/lib/dateUtils';
@@ -50,7 +49,6 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 export default function App() {
   const { user, loading } = useAuth();
-  const [loggingIn, setLoggingIn] = useState(false);
   const [kids, setKids] = useState<Kid[]>([]);
   const [selectedKid, setSelectedKid] = useState<Kid | null>(null);
   const [currentCheckinId, setCurrentCheckinId] = useState<string | null>(null);
@@ -148,14 +146,15 @@ export default function App() {
     loadExistingCheckin();
   }, [user?.uid, selectedKid?.id, parentTimezone]);
 
-  // Save progress to Firestore whenever it changes
+  // Save progress to Firestore with debouncing to reduce writes
   React.useEffect(() => {
-    async function saveProgress() {
-      if (!user?.uid || !selectedKid?.id || !currentCheckinId) return;
+    if (!user?.uid || !selectedKid?.id || !currentCheckinId) return;
 
-      // Don't save if progress is empty
-      if (Object.keys(categoryProgress).length === 0) return;
+    // Don't save if progress is empty
+    if (Object.keys(categoryProgress).length === 0) return;
 
+    // Debounce: only save 2 seconds after last change
+    const timeoutId = setTimeout(async () => {
       try {
         await updateCategoryProgress({
           uid: user.uid,
@@ -166,34 +165,19 @@ export default function App() {
       } catch (error) {
         console.error('Failed to save progress:', error);
       }
-    }
+    }, 2000);
 
-    saveProgress();
+    return () => clearTimeout(timeoutId);
   }, [categoryProgress, user?.uid, selectedKid?.id, currentCheckinId]);
 
-  const handleGoogleLogin = async () => {
-    setLoggingIn(true);
-    try {
-      await loginWithGoogle();
-      // Auth listener will handle navigation
-    } catch (error: any) {
-      console.error('Google login error:', error);
-      Alert.alert(
-        'Login Failed', 
-        error.message || 'Could not sign in with Google. Please try email login instead.'
-      );
-    } finally {
-      setLoggingIn(false);
-    }
-  };
+  // Google login removed - signInWithPopup() doesn't work in React Native
+  // For future Google auth support, use @react-native-firebase/auth or Expo AuthSession
 
-  if (loading || loggingIn) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6366F1" />
-        <Text style={styles.loadingText}>
-          {loggingIn ? 'Signing in...' : 'Loading...'}
-        </Text>
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
@@ -212,7 +196,6 @@ export default function App() {
               <Stack.Screen name="Login">
                 {({ navigation }) => (
                   <LoginScreen
-                    onGoogle={handleGoogleLogin}
                     onEmail={() => navigation.navigate('EmailLogin')}
                   />
                 )}

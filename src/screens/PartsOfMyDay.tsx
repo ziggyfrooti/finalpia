@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { PiaButton } from '../components/PiaButton';
 import { CategoryTile } from '../components/CategoryTile';
 import { ScreenWrapper } from '../components/ScreenWrapper';
@@ -92,7 +92,16 @@ export default function PartsOfMyDay({ onContinue, onBack, timezone = 'America/N
         </View>
 
         <PiaButton
-          onPress={() => onContinue(selected)}
+          onPress={() => {
+            if (selected.length === 0) {
+              Alert.alert(
+                'Select Categories',
+                'Please select at least one part of your day to talk about.'
+              );
+              return;
+            }
+            onContinue(selected);
+          }}
           style={styles.continueButton}
         >
           Continue

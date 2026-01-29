@@ -45,12 +45,8 @@ export function getDayOfWeek(timezone: string): string {
  * @returns true if Saturday or Sunday
  */
 export function isWeekend(timezone: string): boolean {
-  // TEMPORARY: Force weekend mode for testing weekend cards
-  return true;
-
-  // Production code (uncomment when done testing):
-  // const dayOfWeek = getDayOfWeek(timezone);
-  // return dayOfWeek === 'Saturday' || dayOfWeek === 'Sunday';
+  const dayOfWeek = getDayOfWeek(timezone);
+  return dayOfWeek === 'Saturday' || dayOfWeek === 'Sunday';
 }
 
 /**

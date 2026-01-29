@@ -61,6 +61,7 @@ export default function EmailLoginScreen({ onSuccess, onBack }: EmailLoginScreen
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
+              maxLength={254}
             />
           </FloatingCard>
 
@@ -73,6 +74,7 @@ export default function EmailLoginScreen({ onSuccess, onBack }: EmailLoginScreen
               placeholder="Enter your password"
               secureTextEntry
               autoCapitalize="none"
+              maxLength={128}
             />
           </FloatingCard>
 

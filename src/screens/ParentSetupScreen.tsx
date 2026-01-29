@@ -3,17 +3,31 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert 
 import { FloatingCard } from '../components/FloatingCard';
 import { PiaButton } from '../components/PiaButton';
 import { getCurrentUser } from '../lib/db';
-import { ScreenWrapper } from '../components/ScreenWrapper';
+import { db } from '../lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface ParentSetupScreenProps {
   onContinue: () => void;
 }
+
+// Common US timezones for picker
+const TIMEZONES = [
+  { label: 'Auto-detect', value: 'auto' },
+  { label: 'Eastern (New York)', value: 'America/New_York' },
+  { label: 'Central (Chicago)', value: 'America/Chicago' },
+  { label: 'Mountain (Denver)', value: 'America/Denver' },
+  { label: 'Pacific (Los Angeles)', value: 'America/Los_Angeles' },
+  { label: 'Alaska', value: 'America/Anchorage' },
+  { label: 'Hawaii', value: 'Pacific/Honolulu' },
+];
 
 export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps) {
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [role, setRole] = useState('Parent');
   const [notifications, setNotifications] = useState(true);
+  const [timezone, setTimezone] = useState('auto');
+  const [showTimezonePicker, setShowTimezonePicker] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const handleContinue = async () => {
@@ -36,9 +50,10 @@ export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps
     setSaving(true);
     try {
       // Store parent profile in Firestore
-      const { getFirestore, doc, setDoc } = await import('firebase/firestore');
-      const db = getFirestore();
-      
+      const selectedTimezone = timezone === 'auto'
+        ? Intl.DateTimeFormat().resolvedOptions().timeZone
+        : timezone;
+
       await setDoc(
         doc(db, 'parents', user.uid),
         {
@@ -46,9 +61,9 @@ export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps
           location: location.trim(),
           role,
           notificationsEnabled: notifications,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          timezone: selectedTimezone,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
         },
         { merge: true }
       );
@@ -79,6 +94,7 @@ export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps
             onChangeText={setName}
             placeholder="Enter your name"
             placeholderTextColor="#94A3B8"
+            maxLength={50}
           />
         </FloatingCard>
 
@@ -90,6 +106,7 @@ export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps
             onChangeText={setLocation}
             placeholder="City, State or Country"
             placeholderTextColor="#94A3B8"
+            maxLength={100}
           />
         </FloatingCard>
 
@@ -144,6 +161,51 @@ export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps
               </View>
             </TouchableOpacity>
           </View>
+        </FloatingCard>
+
+        <FloatingCard style={styles.card}>
+          <Text style={styles.label}>Child's Timezone</Text>
+          <Text style={styles.sublabel}>
+            Used for daily check-in reset at midnight
+          </Text>
+          <TouchableOpacity
+            onPress={() => setShowTimezonePicker(!showTimezonePicker)}
+            style={styles.timezonePicker}
+          >
+            <Text style={styles.timezoneText}>
+              {TIMEZONES.find(tz => tz.value === timezone)?.label || 'Auto-detect'}
+            </Text>
+            <Text style={styles.timezoneIcon}>▼</Text>
+          </TouchableOpacity>
+          {showTimezonePicker && (
+            <View style={styles.timezoneOptions}>
+              {TIMEZONES.map((tz) => (
+                <TouchableOpacity
+                  key={tz.value}
+                  onPress={() => {
+                    setTimezone(tz.value);
+                    setShowTimezonePicker(false);
+                  }}
+                  style={[
+                    styles.timezoneOption,
+                    timezone === tz.value && styles.timezoneOptionSelected,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.timezoneOptionText,
+                      timezone === tz.value && styles.timezoneOptionTextSelected,
+                    ]}
+                  >
+                    {tz.label}
+                  </Text>
+                  {timezone === tz.value && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </FloatingCard>
       </View>
 
@@ -286,5 +348,59 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     width: '100%',
+  },
+  sublabel: {
+    fontSize: 13,
+    color: '#64748B',
+    marginBottom: 12,
+  },
+  timezonePicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  timezoneText: {
+    fontSize: 16,
+    color: '#1E293B',
+  },
+  timezoneIcon: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+  timezoneOptions: {
+    marginTop: 8,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  timezoneOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  timezoneOptionSelected: {
+    backgroundColor: '#E0F5F0',
+  },
+  timezoneOptionText: {
+    fontSize: 15,
+    color: '#334155',
+  },
+  timezoneOptionTextSelected: {
+    color: '#7DD3C0',
+    fontWeight: '600',
+  },
+  checkmark: {
+    fontSize: 16,
+    color: '#7DD3C0',
+    fontWeight: 'bold',
   },
 });
