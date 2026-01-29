@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { FloatingCard } from '../components/FloatingCard';
+import { ComingSoonModal } from '../components/ComingSoonModal';
 import { logout } from '../lib/auth';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 
@@ -14,6 +15,9 @@ interface ParentSpaceHomeProps {
 }
 
 export default function ParentSpaceHome({ onNavigate, onBack, userEmail, onLogout }: ParentSpaceHomeProps) {
+  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
+  const [comingSoonTitle, setComingSoonTitle] = useState('Coming Soon');
+
   const handleLogout = async () => {
     await logout();
     if (onLogout) {
@@ -21,8 +25,27 @@ export default function ParentSpaceHome({ onNavigate, onBack, userEmail, onLogou
     }
   };
 
+  const handleCardPress = (screen: ScreenKey) => {
+    if (screen === 'your-day') {
+      setComingSoonTitle('Your Day - Coming Soon');
+      setShowComingSoonModal(true);
+    } else if (screen === 'your-balance') {
+      setComingSoonTitle('Your Balance - Coming Soon');
+      setShowComingSoonModal(true);
+    } else {
+      onNavigate(screen);
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {/* Coming Soon Modal */}
+      <ComingSoonModal 
+        visible={showComingSoonModal}
+        onClose={() => setShowComingSoonModal(false)}
+        title={comingSoonTitle}
+      />
+
       {/* Top Bar with User Info and Logout */}
       {userEmail && (
         <View style={styles.topBar}>
@@ -48,7 +71,7 @@ export default function ParentSpaceHome({ onNavigate, onBack, userEmail, onLogou
       <View style={styles.cardsContainer}>
         {/* Today's Story */}
         <FloatingCard>
-          <TouchableOpacity onPress={() => onNavigate('todays-story')} style={styles.card}>
+          <TouchableOpacity onPress={() => handleCardPress('todays-story')} style={styles.card}>
             <View style={[styles.iconContainer, styles.iconTeal]}>
               <Text style={styles.icon}>📖</Text>
             </View>
@@ -62,7 +85,7 @@ export default function ParentSpaceHome({ onNavigate, onBack, userEmail, onLogou
 
         {/* Your Day */}
         <FloatingCard>
-          <TouchableOpacity onPress={() => onNavigate('your-day')} style={styles.card}>
+          <TouchableOpacity onPress={() => handleCardPress('your-day')} style={styles.card}>
             <View style={[styles.iconContainer, styles.iconPeach]}>
               <Text style={styles.icon}>✨</Text>
             </View>
@@ -75,7 +98,7 @@ export default function ParentSpaceHome({ onNavigate, onBack, userEmail, onLogou
 
         {/* Your Balance */}
         <FloatingCard>
-          <TouchableOpacity onPress={() => onNavigate('your-balance')} style={styles.card}>
+          <TouchableOpacity onPress={() => handleCardPress('your-balance')} style={styles.card}>
             <View style={[styles.iconContainer, styles.iconGreen]}>
               <Text style={styles.icon}>📊</Text>
             </View>
