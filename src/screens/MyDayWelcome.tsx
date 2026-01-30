@@ -11,11 +11,12 @@ interface MyDayWelcomeProps {
 }
 
 export default function MyDayWelcome({ onStart, onSkip, childName }: MyDayWelcomeProps) {
-  const greeting = new Date().getHours() < 12
-    ? 'Good morning'
-    : new Date().getHours() < 17
-    ? 'Hi there'
-    : 'Good evening';
+  const greeting = 'Hello';
+  //new Date().getHours() < 12
+    // ? 'Good morning'
+    // : new Date().getHours() < 17
+    // ? 'Hi there'
+    // : 'Good evening';
 
   return (
     <ScreenWrapper>

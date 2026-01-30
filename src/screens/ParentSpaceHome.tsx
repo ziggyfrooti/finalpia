@@ -38,9 +38,10 @@ export default function ParentSpaceHome({ onNavigate, onBack, userEmail, onLogou
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Coming Soon Modal */}
-      <ComingSoonModal 
+    <ScreenWrapper>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Coming Soon Modal */}
+        <ComingSoonModal 
         visible={showComingSoonModal}
         onClose={() => setShowComingSoonModal(false)}
         title={comingSoonTitle}
@@ -118,6 +119,7 @@ export default function ParentSpaceHome({ onNavigate, onBack, userEmail, onLogou
         </View>
       </View>
     </ScrollView>
+    </ScreenWrapper>
   );
 }
 

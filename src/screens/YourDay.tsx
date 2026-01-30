@@ -149,9 +149,10 @@ export default function YourDay({ onBack }: YourDayProps) {
 
   if (step === 'select') {
     return (
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
+      <ScreenWrapper>
+        <ScrollView contentContainerStyle={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.backButton}>
             <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
@@ -191,6 +192,7 @@ export default function YourDay({ onBack }: YourDayProps) {
           </PiaButton>
         </View>
       </ScrollView>
+      </ScreenWrapper>
     );
   }
 
@@ -202,9 +204,10 @@ export default function YourDay({ onBack }: YourDayProps) {
   const progress = ((currentCardIndex + 1) / moments.length) * 100;
 
   return (
-    <View style={styles.swipeContainer}>
-      {/* Header */}
-      <View style={styles.swipeHeader}>
+    <ScreenWrapper>
+      <View style={styles.swipeContainer}>
+        {/* Header */}
+        <View style={styles.swipeHeader}>
         <View style={styles.swipeHeaderLeft}>
           <Text style={styles.swipeCategory}>{currentCategory}</Text>
           <Text style={styles.swipeProgress}>
@@ -267,6 +270,7 @@ export default function YourDay({ onBack }: YourDayProps) {
 
       <Text style={styles.hint}>Swipe right if this happened • Swipe left if it didn't</Text>
     </View>
+    </ScreenWrapper>
   );
 }
 

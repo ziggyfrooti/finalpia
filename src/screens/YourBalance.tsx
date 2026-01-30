@@ -30,9 +30,10 @@ const weeklyData = [
 
 export default function YourBalance({ onBack }: YourBalanceProps) {
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <ScreenWrapper>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
@@ -147,6 +148,7 @@ export default function YourBalance({ onBack }: YourBalanceProps) {
         </PiaButton>
       </View>
     </ScrollView>
+    </ScreenWrapper>
   );
 }
 

@@ -313,9 +313,10 @@ export default function TodaysStory({
    .sort((a, b) => b[1].yes.length - a[1].yes.length);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <ScreenWrapper>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
@@ -444,6 +445,7 @@ export default function TodaysStory({
         })
       )}
     </ScrollView>
+    </ScreenWrapper>
   );
 }
 

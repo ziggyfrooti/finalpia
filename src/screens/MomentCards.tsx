@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder, Dimensions, Alert } from 'react-native';
 import { FloatingCard } from '../components/FloatingCard';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 import { SoundManager } from '../utils/SoundManager';
 import { getRandomCards } from '../data/cardPools';
 
@@ -122,20 +123,22 @@ export default function MomentCards({ category, onComplete, onDone, onChangeCate
   // Handle empty card pools
   if (cards.length === 0) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.categoryTitle}>{category}</Text>
+      <ScreenWrapper>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.categoryTitle}>{category}</Text>
+          </View>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>😕</Text>
+            <Text style={styles.emptyMessage}>
+              No cards available for this category.
+            </Text>
+            <TouchableOpacity onPress={onDone} style={styles.emptyButton}>
+              <Text style={styles.emptyButtonText}>Go Back</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>😕</Text>
-          <Text style={styles.emptyMessage}>
-            No cards available for this category.
-          </Text>
-          <TouchableOpacity onPress={onDone} style={styles.emptyButton}>
-            <Text style={styles.emptyButtonText}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      </ScreenWrapper>
     );
   }
 
@@ -169,9 +172,10 @@ export default function MomentCards({ category, onComplete, onDone, onChangeCate
   });
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <ScreenWrapper>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
         <View style={styles.headerInfo}>
           <Text style={styles.categoryTitle}>{category}</Text>
           <Text style={styles.progressText}>
@@ -291,6 +295,7 @@ export default function MomentCards({ category, onComplete, onDone, onChangeCate
 
       <Text style={styles.hint}>Swipe right (yes) • Swipe up (unsure) • Swipe left (no)</Text>
     </View>
+    </ScreenWrapper>
   );
 }
 
@@ -299,7 +304,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FBF9F4',
     paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingTop: 60,
+    paddingBottom: 32,
   },
   header: {
     flexDirection: 'row',
