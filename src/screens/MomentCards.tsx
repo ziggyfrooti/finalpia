@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder, Dimensions, Alert } from 'react-native';
 import { FloatingCard } from '../components/FloatingCard';
 import { ScreenWrapper } from '../components/ScreenWrapper';
+import { Mascot } from '../components/Mascot';
+import { FloatingSparkles } from '../components/FloatingSparkles';
 import { SoundManager } from '../utils/SoundManager';
 import { getRandomCards } from '../data/cardPools';
+import { Colors } from '../constants/theme';
 
 interface MomentCardsProps {
   category: string;
@@ -173,9 +176,13 @@ export default function MomentCards({ category, onComplete, onDone, onChangeCate
 
   return (
     <ScreenWrapper>
+      <FloatingSparkles count={6} />
       <View style={styles.container}>
-        {/* Header */}
+        {/* Header with Mascot */}
         <View style={styles.header}>
+        <View style={styles.mascotHelper}>
+          <Mascot size="sm" type="thinking" animate={true} />
+        </View>
         <View style={styles.headerInfo}>
           <Text style={styles.categoryTitle}>{category}</Text>
           <Text style={styles.progressText}>
@@ -302,7 +309,7 @@ export default function MomentCards({ category, onComplete, onDone, onChangeCate
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF9F4',
+    backgroundColor: Colors.background,
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 32,
@@ -313,44 +320,53 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
+  mascotHelper: {
+    marginRight: 8,
+  },
   headerInfo: {
     flex: 1,
   },
   categoryTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: 22,
+    fontWeight: '700',
+    color: Colors.text,
     textTransform: 'capitalize',
     marginBottom: 4,
   },
   progressText: {
     fontSize: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
+    fontWeight: '600',
   },
   pauseButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   pauseIcon: {
-    fontSize: 20,
+    fontSize: 22,
   },
   progressBarContainer: {
     width: '100%',
-    height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    borderRadius: 4,
+    height: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 5,
     overflow: 'hidden',
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#7DD3C0',
+    backgroundColor: Colors.accent1,
   },
   pauseMenu: {
     marginBottom: 16,
@@ -387,14 +403,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardEmoji: {
-    fontSize: 64,
+    fontSize: 72,
     marginBottom: 24,
   },
   cardText: {
-    fontSize: 20,
-    color: '#1E293B',
+    fontSize: 22,
+    color: Colors.text,
     textAlign: 'center',
-    lineHeight: 28,
+    lineHeight: 32,
+    fontWeight: '500',
   },
   indicator: {
     position: 'absolute',
