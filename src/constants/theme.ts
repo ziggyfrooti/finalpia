@@ -5,9 +5,11 @@
 
 export const Colors = {
   // Primary colors - More vibrant and playful
-  primary: '#FF6B9D', // Pink
-  primaryLight: '#FFB8D1',
-  primaryDark: '#E85A8A',
+  primary: '#de8f57', // Pink
+  primaryLight: '#de8f5780',
+  primaryDark: '#D4956A',
+
+  primaryButton: '#3D3229', // Dark brown for buttons
 
   // Secondary colors - Bright and cheerful
   secondary: '#FFD93D', // Sunny yellow
