@@ -1,5 +1,6 @@
-import React from 'react';
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { TouchableOpacity, Text, View, StyleSheet, Animated } from 'react-native';
+import { Colors } from '../constants/theme';
 
 interface CategoryTileProps {
   label: string;
@@ -17,16 +18,57 @@ export function CategoryTile({
   onToggle,
 }: CategoryTileProps) {
   const handlePress = onClick ?? onToggle;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (selected) {
+      const glow = Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowAnim, {
+            toValue: 1,
+            duration: 1500,
+            useNativeDriver: false,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0,
+            duration: 1500,
+            useNativeDriver: false,
+          }),
+        ])
+      );
+      glow.start();
+      return () => glow.stop();
+    }
+  }, [selected, glowAnim]);
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      useNativeDriver: true,
+    }).start();
+  };
 
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      style={[
-        styles.container,
-        selected && styles.containerSelected,
-      ]}
-      activeOpacity={0.7}
-    >
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={[
+          styles.container,
+          selected && styles.containerSelected,
+        ]}
+        activeOpacity={0.9}
+      >
       <View style={styles.content}>
         {icon && (
           <View style={styles.iconContainer}>
@@ -50,28 +92,29 @@ export function CategoryTile({
           </Text>
         </View>
       </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    padding: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   containerSelected: {
-    borderColor: 'rgba(125, 211, 192, 0.5)',
-    borderWidth: 2,
+    borderColor: Colors.primary,
+    borderWidth: 3,
     backgroundColor: '#FFFFFF',
-    shadowColor: '#7DD3C0',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 5,
   },
   content: {
     flexDirection: 'row',
@@ -79,10 +122,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(125, 211, 192, 0.15)',
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -90,28 +133,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text,
   },
   badge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: Colors.border,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeSelected: {
-    backgroundColor: '#7DD3C0',
-    borderColor: '#7DD3C0',
+    backgroundColor: Colors.accent1,
+    borderColor: Colors.accent1,
   },
   badgeText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   badgeTextSelected: {
     color: '#FFFFFF',

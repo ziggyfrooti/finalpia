@@ -4,7 +4,10 @@ import { FloatingCard } from '../components/FloatingCard';
 import { PiaButton } from '../components/PiaButton';
 import { ProgressRing } from '../components/ProgressRing';
 import { ScreenWrapper } from '../components/ScreenWrapper';
+import { Mascot } from '../components/Mascot';
+import { FloatingSparkles } from '../components/FloatingSparkles';
 import { getCategoryLabel, getCategoryEmoji } from '../data/categories';
+import { Colors } from '../constants/theme';
 
 interface CategoryHubProps {
   categories: string[];
@@ -31,11 +34,19 @@ export default function CategoryHub({
 
   return (
     <ScreenWrapper>
+      <FloatingSparkles count={8} />
       <ScrollView contentContainerStyle={styles.container}>
-      {/* Header */}
+      {/* Header with Mascot */}
       <View style={styles.header}>
+        <View style={styles.mascotContainer}>
+          <Mascot 
+            size="lg" 
+            type={allCategoriesComplete ? 'celebrating' : 'happy'} 
+            animate={true}
+          />
+        </View>
         <Text style={styles.title}>My Day Progress</Text>
-        <Text style={styles.subtitle}>Tap a category to continue</Text>
+        <Text style={styles.subtitle}>Tap a category to continue ✨</Text>
       </View>
 
       {/* Reminder banner when all complete */}
@@ -108,22 +119,28 @@ export default function CategoryHub({
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#FBF9F4',
+    backgroundColor: Colors.background,
     paddingHorizontal: 24,
     paddingVertical: 32,
   },
   header: {
     marginBottom: 32,
+    alignItems: 'center',
+  },
+  mascotContainer: {
+    marginBottom: 16,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: 32,
+    fontWeight: '700',
+    color: Colors.text,
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748B',
+    fontSize: 18,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
   categoriesContainer: {
     flex: 1,
@@ -135,24 +152,24 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   completedCard: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
   categoryContent: {
     flex: 1,
   },
   categoryLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1E293B',
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text,
     marginBottom: 4,
   },
   categoryStatus: {
     fontSize: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   chevron: {
-    fontSize: 24,
-    color: '#94A3B8',
+    fontSize: 28,
+    color: Colors.primary,
   },
   actionsContainer: {
     marginTop: 32,
@@ -164,24 +181,26 @@ const styles = StyleSheet.create({
   },
   continueButtonText: {
     fontSize: 16,
-    color: '#64748B',
+    color: Colors.textSecondary,
+    fontWeight: '600',
   },
   reminderBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E0F2FE',
-    borderRadius: 12,
+    backgroundColor: Colors.accent5,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 24,
     gap: 12,
   },
   reminderIcon: {
-    fontSize: 24,
+    fontSize: 32,
   },
   reminderText: {
     flex: 1,
-    fontSize: 14,
-    color: '#0C4A6E',
+    fontSize: 15,
+    color: Colors.text,
     lineHeight: 20,
+    fontWeight: '500',
   },
 });

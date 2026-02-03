@@ -4,15 +4,24 @@
  */
 
 export const Colors = {
-  // Primary colors
-  primary: '#6366F1',
-  primaryLight: '#818CF8',
-  primaryDark: '#4F46E5',
+  // Primary colors - More vibrant and playful
+  primary: '#de8f57', // Pink
+  primaryLight: '#de8f5780',
+  primaryDark: '#D4956A',
 
-  // Secondary colors
-  secondary: '#7DD3C0',
-  secondaryLight: '#D4F4EA',
-  secondaryDark: '#5DBBA8',
+  primaryButton: '#3D3229', // Dark brown for buttons
+
+  // Secondary colors - Bright and cheerful
+  secondary: '#FFD93D', // Sunny yellow
+  secondaryLight: '#FFF4B8',
+  secondaryDark: '#FFC107',
+
+  // Accent colors - Add variety
+  accent1: '#7DD3C0', // Teal (kept from original)
+  accent2: '#A78BFA', // Purple
+  accent3: '#FF9B8A', // Coral (kept from original)
+  accent4: '#6BDBFF', // Sky blue
+  accent5: '#B4EFC4', // Mint green
 
   // Feedback colors
   success: '#7DD3C0',
@@ -21,18 +30,23 @@ export const Colors = {
   errorLight: '#FFE5E0',
   warningLight: '#FFF4E0',
 
-  // Neutral colors
-  background: '#FBF9F4',
+  // Neutral colors - Warmer and friendlier
+  background: '#FFF5F7', // Soft pink tint
+  backgroundAlt: '#F0F9FF', // Alternate sky blue tint
   surface: '#FFFFFF',
-  text: '#1E293B',
-  textSecondary: '#64748B',
-  textTertiary: '#94A3B8',
+  text: '#2D3748',
+  textSecondary: '#718096',
+  textTertiary: '#A0AEC0',
   border: '#E2E8F0',
-  borderLight: '#F1F5F9',
+  borderLight: '#F7FAFC',
 
   // Overlay colors
   overlay: 'rgba(0, 0, 0, 0.5)',
   disabled: 'rgba(0, 0, 0, 0.3)',
+  
+  // Fun gradient colors
+  gradientStart: '#FF6B9D',
+  gradientEnd: '#FFD93D',
 } as const;
 
 export const Spacing = {

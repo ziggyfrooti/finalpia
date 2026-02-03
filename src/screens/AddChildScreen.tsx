@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Modal } from 'react-native';
 import { PiaButton } from '../components/PiaButton';
 import { Mascot } from '../components/Mascot';
+import { FloatingSparkles } from '../components/FloatingSparkles';
 import { addKid, getCurrentUser } from '../lib/db';
 import { ScreenWrapper } from '../components/ScreenWrapper';
+import { Colors } from '../constants/theme';
 
 interface AddChildScreenProps {
   onComplete: (kidId: string) => void;
@@ -130,13 +132,14 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
   };
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper useGradient={true}>
+      <FloatingSparkles count={6} />
       <ScrollView contentContainerStyle={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Mascot size="md" />
+        <Mascot size="lg" type="excited" animate={true} />
         <Text style={styles.title}>Add Your Child</Text>
-        <Text style={styles.subtitle}>Let's get to know them!</Text>
+        <Text style={styles.subtitle}>Let's get to know them! 🌟</Text>
       </View>
 
       {/* Added Kids List */}
@@ -228,7 +231,7 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
           disabled={loading || !name.trim() || !selectedGrade}
           style={styles.addButton}
         >
-          {loading ? 'Adding...' : addedKids.length > 0 ? 'Add Another Child' : 'Add Child'}
+          {loading ? 'Adding...' : addedKids.length > 0 ? 'Add Child' : 'Add Child'}
         </PiaButton>
         {addedKids.length > 0 && (
           <PiaButton
@@ -276,11 +279,11 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
               Great! Would you like to add another child or continue?
             </Text>
             <View style={styles.modalButtons}>
-              <PiaButton onPress={handleAddAnother} style={styles.modalButton}>
-                Add Another
-              </PiaButton>
-              <PiaButton onPress={handleContinue} style={styles.continueButton}>
+              <PiaButton onPress={handleContinue} style={styles.modalContinueButton}>
                 Continue
+              </PiaButton>
+              <PiaButton onPress={handleAddAnother} variant="secondary" style={styles.modalAddButton}>
+                Add Another Child
               </PiaButton>
             </View>
           </View>
@@ -294,7 +297,6 @@ export default function AddChildScreen({ onComplete, onCancel, hideCancel = fals
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#FBF9F4',
     paddingHorizontal: 24,
     paddingVertical: 32,
   },
@@ -303,28 +305,29 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: 32,
+    fontWeight: '700',
+    color: Colors.text,
     marginTop: 16,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748B',
+    fontSize: 18,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
   addedKidsSection: {
     marginBottom: 24,
     padding: 16,
-    backgroundColor: 'rgba(125, 211, 192, 0.1)',
-    borderRadius: 16,
+    backgroundColor: Colors.accent5,
+    borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#7DD3C0',
+    borderColor: Colors.accent1,
   },
   addedKidsLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#334155',
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.text,
     marginBottom: 12,
   },
   addedKidsList: {
@@ -334,48 +337,59 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 16,
+    padding: 14,
     gap: 12,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   addedKidAvatar: {
-    fontSize: 28,
+    fontSize: 32,
   },
   addedKidInfo: {
     flex: 1,
   },
   addedKidName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.text,
   },
   addedKidGrade: {
-    fontSize: 12,
-    color: '#64748B',
+    fontSize: 13,
+    color: Colors.textSecondary,
     marginTop: 2,
+    fontWeight: '500',
   },
   addedKidCheck: {
-    fontSize: 20,
-    color: '#7DD3C0',
+    fontSize: 24,
+    color: Colors.accent1,
   },
   section: {
     marginBottom: 32,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#334155',
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.text,
     marginBottom: 12,
   },
   input: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#1E293B',
+    borderWidth: 2,
+    borderColor: Colors.border,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    fontSize: 17,
+    color: Colors.text,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   avatarGrid: {
     flexDirection: 'row',
@@ -383,57 +397,69 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   avatarOption: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderWidth: 3,
+    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   avatarOptionSelected: {
-    borderColor: '#7DD3C0',
-    backgroundColor: 'rgba(125, 211, 192, 0.1)',
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
+    transform: [{ scale: 1.05 }],
   },
   avatarEmoji: {
-    fontSize: 32,
+    fontSize: 36,
   },
   gradeScrollContainer: {
     paddingVertical: 4,
     gap: 8,
   },
   gradeOption: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.border,
     marginRight: 8,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   gradeOptionSelected: {
-    borderColor: '#7DD3C0',
-    backgroundColor: 'rgba(125, 211, 192, 0.1)',
+    borderColor: Colors.accent1,
+    backgroundColor: Colors.accent5,
+    borderWidth: 3,
   },
   gradeText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#64748B',
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.textSecondary,
   },
   gradeTextSelected: {
-    color: '#1E293B',
-    fontWeight: '600',
+    color: Colors.text,
+    fontWeight: '700',
   },
   buttonsContainer: {
     gap: 12,
     marginTop: 32,
   },
   addButton: {
-    backgroundColor: '#7DD3C0',
+    backgroundColor: Colors.accent1,
   },
   continueButton: {
-    backgroundColor: '#FFB4A2',
+    backgroundColor: Colors.primary,
   },
   modalOverlay: {
     flex: 1,
@@ -456,63 +482,67 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   successIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(125, 211, 192, 0.2)',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   successIcon: {
-    fontSize: 48,
+    fontSize: 56,
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: 28,
+    fontWeight: '700',
+    color: Colors.text,
     marginBottom: 16,
   },
   modalKidInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(125, 211, 192, 0.1)',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: Colors.accent5,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 16,
     width: '100%',
   },
   modalKidAvatar: {
-    fontSize: 36,
+    fontSize: 40,
   },
   modalKidTextInfo: {
     flex: 1,
   },
   modalKidName: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: 22,
+    fontWeight: '700',
+    color: Colors.text,
   },
   modalKidGrade: {
-    fontSize: 14,
-    color: '#64748B',
+    fontSize: 15,
+    color: Colors.textSecondary,
     marginTop: 4,
+    fontWeight: '500',
   },
   modalSubtitle: {
-    fontSize: 16,
-    color: '#64748B',
+    fontSize: 17,
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 24,
+    fontWeight: '500',
   },
   modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
     width: '100%',
+    gap: 12,
   },
-  modalButton: {
-    flex: 1,
-    backgroundColor: '#7DD3C0',
+  modalContinueButton: {
+    width: '100%',
+    backgroundColor: Colors.primary,
+  },
+  modalAddButton: {
+    width: '100%',
   },
 });

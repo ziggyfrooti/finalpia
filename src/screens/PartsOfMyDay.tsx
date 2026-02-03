@@ -3,8 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { PiaButton } from '../components/PiaButton';
 import { CategoryTile } from '../components/CategoryTile';
 import { ScreenWrapper } from '../components/ScreenWrapper';
+import { Mascot } from '../components/Mascot';
+import { FloatingSparkles } from '../components/FloatingSparkles';
 import { getCategories } from '../data/categories';
 import { isWeekend as checkIsWeekend } from '../lib/dateUtils';
+import { Colors } from '../constants/theme';
 
 interface PartsOfMyDayProps {
   onContinue: (selectedCategories: string[]) => void;
@@ -49,7 +52,8 @@ export default function PartsOfMyDay({ onContinue, onBack, timezone = 'America/N
   };
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper useGradient={true}>
+      <FloatingSparkles count={8} />
       <ScrollView contentContainerStyle={styles.container}>
       {/* Back Button */}
       {onBack && (
@@ -58,12 +62,15 @@ export default function PartsOfMyDay({ onContinue, onBack, timezone = 'America/N
         </TouchableOpacity>
       )}
 
-      {/* Header */}
+      {/* Header with Mascot */}
       <View style={styles.header}>
+        <View style={styles.mascotContainer}>
+          <Mascot size="lg" type="happy" animate={true} />
+        </View>
         <Text style={styles.title}>
           {isWeekendDay ? 'My Weekend' : 'Parts of My Day'}
         </Text>
-        <Text style={styles.subtitle}>Choose what you want to talk about</Text>
+        <Text style={styles.subtitle}>Choose what you want to talk about ✨</Text>
       </View>
 
       {/* Categories Grid */}
@@ -115,8 +122,7 @@ export default function PartsOfMyDay({ onContinue, onBack, timezone = 'America/N
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#FBF9F4',
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingVertical: 32,
   },
   backButton: {
@@ -125,30 +131,35 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#64748B',
-    fontWeight: '500',
+    color: Colors.textSecondary,
+    fontWeight: '600',
   },
   header: {
     marginBottom: 32,
+    alignItems: 'center',
+  },
+  mascotContainer: {
+    marginBottom: 16,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: 32,
+    fontWeight: '700',
+    color: Colors.text,
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748B',
+    fontSize: 18,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    fontWeight: '500',
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
+    gap: 12,
     marginBottom: 32,
   },
   gridItem: {
-    width: '47%',
+    width: '100%',
   },
   footer: {
     marginTop: 32,
@@ -159,30 +170,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    backgroundColor: Colors.primaryLight,
+    borderRadius: 20,
     alignSelf: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   counterBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#7DD3C0',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   counterBadgeText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#FFFFFF',
   },
   counterText: {
-    fontSize: 14,
-    color: '#334155',
+    fontSize: 15,
+    color: Colors.text,
+    fontWeight: '600',
   },
   continueButton: {
     width: '100%',

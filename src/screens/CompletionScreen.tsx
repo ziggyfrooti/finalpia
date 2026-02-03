@@ -2,7 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { PiaButton } from '../components/PiaButton';
 import { ScreenWrapper } from '../components/ScreenWrapper';
+import { Mascot } from '../components/Mascot';
+import { FloatingSparkles } from '../components/FloatingSparkles';
 import { SoundManager } from '../utils/SoundManager';
+import { Colors } from '../constants/theme';
 import ConfettiCannon from 'react-native-confetti-cannon';
 
 interface CompletionScreenProps {
@@ -38,8 +41,10 @@ export default function CompletionScreen({
 
   return (
     <ScreenWrapper>
+      <FloatingSparkles count={12} />
       <View style={styles.container}>
         <View style={styles.content}>
+          <Mascot size="lg" type="celebrating" animate={true} />
           <Text style={styles.emoji}>{emoji}</Text>
           <Text style={styles.title}>{message}</Text>
 
@@ -80,9 +85,9 @@ export default function CompletionScreen({
         {/* Confetti Animation */}
         <ConfettiCannon
           ref={confettiRef}
-          count={50}
+          count={80}
           origin={{ x: width / 2, y: 0 }}
-          colors={['#7DD3C0', '#FFB8D1', '#FF9B8A', '#B4EFC4', '#FFD93D']}
+          colors={[Colors.primary, Colors.secondary, Colors.accent1, Colors.accent2, Colors.accent4, Colors.accent5]}
           explosionSpeed={350}
           fallSpeed={3000}
           fadeOut={true}
@@ -96,33 +101,34 @@ export default function CompletionScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF9F4',
+    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
   content: {
     alignItems: 'center',
-    gap: 24,
+    gap: 20,
     maxWidth: 320,
   },
   emoji: {
-    fontSize: 80,
+    fontSize: 96,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: 32,
+    fontWeight: '700',
+    color: Colors.text,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748B',
+    fontSize: 18,
+    color: Colors.textSecondary,
     textAlign: 'center',
+    fontWeight: '500',
   },
   button: {
     marginTop: 16,
-    minWidth: 200,
+    minWidth: 220,
   },
   laterButton: {
     marginTop: 12,
@@ -131,7 +137,8 @@ const styles = StyleSheet.create({
   },
   laterText: {
     fontSize: 16,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
+    fontWeight: '600',
   },
 });

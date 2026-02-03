@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { FloatingCard } from '../components/FloatingCard';
 import { PiaButton } from '../components/PiaButton';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 import { getCurrentUser } from '../lib/db';
 import { db } from '../lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -77,9 +78,10 @@ export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <ScreenWrapper>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
         <Text style={styles.title}>Let's set up your profile</Text>
         <Text style={styles.subtitle}>Tell us a bit about yourself</Text>
       </View>
@@ -220,6 +222,7 @@ export default function ParentSetupScreen({ onContinue }: ParentSetupScreenProps
         </PiaButton>
       </View>
     </ScrollView>
+    </ScreenWrapper>
   );
 }
 
