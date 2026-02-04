@@ -44,7 +44,7 @@ export default function CompletionScreen({
       <FloatingSparkles count={12} />
       <View style={styles.container}>
         <View style={styles.content}>
-          <Mascot size="lg" type="celebrating" animate={true} />
+          <Mascot size="lg" type="excited" animate={true} />
           <Text style={styles.emoji}>{emoji}</Text>
           <Text style={styles.title}>{message}</Text>
 
